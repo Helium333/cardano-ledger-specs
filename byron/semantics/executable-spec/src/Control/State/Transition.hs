@@ -176,3 +176,13 @@ applySTS :: forall s rtype
 applySTS ctx = case applySTSIndifferently ctx of
   (st, []) -> Right st
   (_, pfs) -> Left pfs
+
+applyRule
+  :: forall s rtype
+   . (STS s, RuleTypeRep rtype)
+  => RuleContext rtype s
+  -> Rule s rtype (State s)
+  -> Either [PredicateFailure s] (State s)
+applyRule jc r =
+  let (st, pfs) = applyRuleIndifferently jc r
+  in if (null pfs) then Right st else Left pfs

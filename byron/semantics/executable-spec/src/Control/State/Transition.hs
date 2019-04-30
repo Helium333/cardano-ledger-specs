@@ -179,7 +179,7 @@ applySTS ctx = case applySTSIndifferently ctx of
 
 applyRule
   :: forall s rtype
-   . (STS s, RuleTypeRep rtype)
+   . (RuleTypeRep rtype)
   => RuleContext rtype s
   -> Rule s rtype (State s)
   -> Either [PredicateFailure s] (State s)

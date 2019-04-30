@@ -8,6 +8,11 @@ packages:
 - shelley/chain-and-ledger/dependencies/non-integer
 
 extra-deps:
+- capability-0.2.0.0
+- moo-1.2
+- gray-code-0.3.1
 - sequence-0.9.8
 - tasty-hedgehog-0.2.0.0
 - tasty-hedgehog-coverage-0.1.0.0
+- git: https://github.com/input-output-hk/goblins
+  commit: 972f80d603e5f988e16fa4b9a9645dbfc4edd654

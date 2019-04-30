@@ -1,10 +1,13 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeInType #-}
@@ -29,22 +32,36 @@ module Control.State.Transition.Generator
   , isTrivial
   , sampleMaxTraceSize
   , randomTrace
+  , runGenM
+  , stsStepGen
   )
 where
 
+import Capability.State (HasState (..), MonadState (..), get, put)
+import Capability.Stream (HasStream)
+import Capability.Writer (Field (..), HasWriter, StreamLog (..), WriterLog, tell)
 import Control.Monad (forM)
-import Hedgehog (Gen)
+import Control.Monad.Morph (hoist)
+import Control.Monad.Trans.Class (lift)
+import qualified Control.Monad.State.Strict as MS
+import Data.List (partition)
+import GHC.Generics (Generic)
+import Hedgehog (Gen, GenT)
 import qualified Hedgehog.Gen as Gen
 import Hedgehog.Range (Size(Size), unSize)
 
 import Control.State.Transition
   ( Environment
+  , PredicateFailure
   , IRC(IRC)
   , STS
   , Signal
   , State
   , TRC(TRC)
   , applySTS
+  , applyRuleIndifferently
+  , initialRules
+  , transitionRules
   )
 import Control.State.Transition.Trace
   ( Trace
@@ -209,6 +226,9 @@ deriving via Field "bkEnvironment" () (MonadState (GenT (MS.State (Bookkeeping s
   instance (env ~ Environment s) => HasState "bkEnvironment" env (GenM s)
 
 deriving via WriterLog (Field "bkTrace" () (MonadState (GenT (MS.State (Bookkeeping s)))))
+  instance (sig ~ Signal s) => HasStream "bkTrace" [(sig, [PredicateFailure s])] (GenM s)
+
+deriving via WriterLog (Field "bkTrace" () (MonadState (GenT (MS.State (Bookkeeping s)))))
   instance (sig ~ Signal s) => HasWriter "bkTrace" [(sig, [PredicateFailure s])] (GenM s)
 
 -- | Run the generator, given a generator for the environment and an initial generator state.
@@ -232,10 +252,10 @@ stsStepGen
   => GenM s (Signal s)
      -- | Resulting state
   -> GenM s (State s)
-stsStepGen sigGen = do
+stsStepGen signalGen = do
   env <- get @"bkEnvironment"
   st <- get @"bkState"
-  signal <- sigGen
+  signal <- signalGen
   -- We attempt to apply all (non-base) rules
   let
     jc :: TRC s

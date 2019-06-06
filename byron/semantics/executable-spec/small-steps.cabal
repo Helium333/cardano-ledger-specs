@@ -98,3 +98,30 @@ test-suite examples
                      , small-steps
   if (!flag(development))
     ghc-options:      -Werror
+
+test-suite goblins-test
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Generator
+      Mutator
+  hs-source-dirs:
+      test/goblins-test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , cryptonite
+    , delegation
+    , goblins
+    , hedgehog
+    , lens
+    , pretty
+    , small-steps
+    , tasty
+    , tasty-hedgehog
+    , tasty-hunit
+    , text
+    , tree-diff >=0.0.2
+    , typerep-map
+  default-language: Haskell2010

@@ -10,6 +10,10 @@ packages:
 extra-deps:
 - sequence-0.9.8
 - tasty-hedgehog-1.0.0.1 # Needed due to https://github.com/qfpl/tasty-hedgehog/issues/30
+- moo-1.2
+- gray-code-0.3.1
+- typerep-map-0.3.1
+- ../goblins
 
 nix:
   shell-file: nix/stack-shell.nix

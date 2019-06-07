@@ -4,21 +4,21 @@ import           Data.TreeDiff.Pretty
 import qualified Data.TypeRepMap as TM
 import           Text.PrettyPrint (render)
 
+import           Cardano.Ledger.Spec.STS.UTXOW (UTXOW(..), PredicateFailure(..))
+import           Control.State.Transition (STS(..))
 import           Control.State.Transition.Goblin.BreedingPit (breedStsGoblins)
 import           Test.Goblin
 import           Test.Goblin.Explainer
 
 main :: IO ()
 main = do
-  pop <- breedStsGoblins sigGen (UTXOFailure [StakeKeyAlreadyRegistered])
-  case (filter ((> 100.0) . view _2) pop) of
+  pop <- breedStsGoblins @UTXOW InsufficientWitnesses
+  case (filter ((> 100.0) . snd) pop) of
     (best:_) -> do
-      putStrLn $ "Best goblin scored " ++ show (best ^. _2)
-      let (Just diff) = explainGoblinGen (fmap (view _3) jcGen) (spawnGoblin (best ^. _1) TM.empty)
-      putStrLn $ render $ prettyEditExprCompact diff
+      putStrLn $ "Best goblin scored " ++ show (snd best)
+      -- let (Just diff) = explainGoblinGen (fmap thd jcGen) (spawnGoblin (fst best) TM.empty)
+      -- putStrLn $ render $ prettyEditExprCompact diff
     [] -> putStrLn "No good goblins bred!"
- where
-  startState = unwrapRule (head initialRules)
-  jcGen = do
-    (_, steps, _, sig, ls) <- genValidStateTx
-    return (Slot steps, ls, sig)
+
+thd :: (a,b,c) -> c
+thd (_,_,x) = x

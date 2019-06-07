@@ -109,9 +109,6 @@ test-suite examples
 test-suite goblins-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
-  other-modules:
-      Generator
-      Mutator
   hs-source-dirs:
       test/goblins-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
@@ -119,7 +116,6 @@ test-suite goblins-test
       base >=4.7 && <5
     , containers
     , cryptonite
-    , delegation
     , goblins
     , hedgehog
     , lens

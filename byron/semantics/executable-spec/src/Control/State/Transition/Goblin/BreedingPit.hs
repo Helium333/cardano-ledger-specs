@@ -8,28 +8,27 @@ module Control.State.Transition.Goblin.BreedingPit
   )
 where
 
-import Control.Monad (join)
-import Control.Monad.State.Strict (evalStateT)
-import Control.Monad.Trans.Maybe (runMaybeT)
+import           Control.Monad (forM, join)
+import           Control.Monad.State.Strict (evalStateT)
+import           Control.Monad.Trans.Maybe (runMaybeT)
 import qualified Data.TypeRepMap as TM
-import Hedgehog
+import           Hedgehog
 import qualified Hedgehog.Internal.Gen as IGen
 import qualified Hedgehog.Internal.Tree as ITree
 import qualified Hedgehog.Range as Range
 
-import Control.State.Transition
-import Test.Goblin
-import Moo.GeneticAlgorithm.Binary
+import           Control.State.Transition
+  (IRC(..), STS(..), TRC(..), applyRuleIndifferently)
+import           Control.State.Transition.Generator (HasTrace(..))
+import           Test.Goblin
+import           Moo.GeneticAlgorithm.Binary
 
 breedStsGoblins
-  :: forall s
-   . (STS s, Goblin Bool (Signal s))
-  => Environment s -- ^ Rule environment
-  -> State s -- ^ Initial valid state
-  -> Gen (Signal s) -- ^ Generator for a new signal
-  -> PredicateFailure s -- ^ Failure we are looking for
+  :: forall sts
+   . (HasTrace sts, Goblin Bool (Signal sts))
+  => PredicateFailure sts
   -> IO ()
-breedStsGoblins env initState sigGen wantedFailure =
+breedStsGoblins wantedFailure =
   let
     popsize    = 101
     genomeSize = 100
@@ -37,6 +36,9 @@ breedStsGoblins env initState sigGen wantedFailure =
 
     genSize    = Range.Size 1
     genSeed    = Seed 12345 12345
+
+    -- TODO @mhueschen: unclear to me whether the environment should stay the same
+    -- or change over the duration of a breeding cycle.
 
     -- | Fitness function. This should run the goblins on a set of examples
     -- which we generate atop `initState`.
@@ -48,27 +50,46 @@ breedStsGoblins env initState sigGen wantedFailure =
         . distributeT
         . IGen.runGenT genSize genSeed
         $ do
-        -- TODO Loop some number of times
-            sig    <- sigGen
-            newSig <- evalStateT (tinker sig) gd
-            -- Apply the signal to the state (and environment)
-            let
-              jc      = TRC (env, initState, newSig)
-              results = applyRuleIndifferently @s jc <$> transitionRules
-            -- Score the result
-            return $ scoreResult results
+          -- TODO Loop some number of times
+          let gd = spawnGoblin genome TM.empty
+          --
+          env <- initEnvGen @sts
+          case applyRuleIndifferently @sts (IRC env) <$> initialRules of
+            [] -> error "no initStates"
+            ps -> let pfs :: [PredicateFailure sts]
+                      pfs = join (snd <$> ps)
+                   in if not (null pfs)
+                         then pure (scoreResult pfs)
+                         else do
+                           let initStates = map fst ps
+
+                           sigs <- forM initStates (sigGen @sts env)
+                           newSigs <- forM sigs
+                                        (\sig -> evalStateT (tinker sig) gd)
+
+                           let jcs = [ TRC (env, st, newSig)
+                                     | st <- initStates
+                                     , newSig <- newSigs
+                                     ]
+
+                           -- Apply the signal to the state (and environment)
+                           let results = [ applyRuleIndifferently @sts jc trs
+                                         | jc <- jcs
+                                         , trs <- transitionRules
+                                         ]
+
+                           -- Score the result
+                           pure $ scoreResult (join (snd <$> results))
      where
-      gd = spawnGoblin genome TM.empty
-      scoreResult :: [(State s, [PredicateFailure s])] -> Double
-      scoreResult result =
+
+      scoreResult :: [PredicateFailure sts] -> Double
+      scoreResult failures =
         -- 0 points for a rule passing
         -- -1 points for an unwanted predicate failure
         -- 5 points for a desired predicate failure
-        let failures = join $ snd <$> result
-        in
-          fromIntegral
-          $ (5 * length (filter (== wantedFailure) failures))
-          - length failures
+        fromIntegral
+        $ (5 * length (filter (== wantedFailure) failures))
+        - length failures
 
     initialize = getRandomBinaryGenomes popsize genomeSize
     select     = stochasticUniversalSampling popsize

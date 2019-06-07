@@ -109,6 +109,8 @@ test-suite examples
 test-suite goblins-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
+  other-modules:
+      Instances
   hs-source-dirs:
       test/goblins-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints

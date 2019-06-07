@@ -109,6 +109,7 @@ test-suite goblins-test
       base >=4.7 && <5
     , containers
     , cryptonite
+    , cs-ledger
     , goblins
     , hedgehog
     , lens

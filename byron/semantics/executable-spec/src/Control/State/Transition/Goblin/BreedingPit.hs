@@ -27,7 +27,7 @@ breedStsGoblins
   :: forall sts
    . (HasTrace sts, Goblin Bool (Signal sts))
   => PredicateFailure sts
-  -> IO ()
+  -> IO (Population Bool)
 breedStsGoblins wantedFailure =
   let
     popsize    = 101
@@ -103,3 +103,4 @@ breedStsGoblins wantedFailure =
   in do
     population <- runGA initialize evolve
     print (bestFirst Minimizing population)
+    pure population

@@ -8,8 +8,7 @@ module Control.State.Transition.Goblin.BreedingPit
   )
 where
 
-import           Control.Monad (forM, join)
-import           Control.Monad.State.Strict (evalStateT)
+import           Control.Monad.State.Strict (evalState)
 import           Control.Monad.Trans.Maybe (runMaybeT)
 import qualified Data.TypeRepMap as TM
 import           Hedgehog
@@ -30,12 +29,13 @@ breedStsGoblins
   -> IO (Population Bool)
 breedStsGoblins wantedFailure =
   let
-    popsize    = 101
-    genomeSize = 100
-    maxiters   = 10000
+    popsize    = 500
+    genomeSize = 1000
+    maxiters   = 1000000
 
     genSize    = Range.Size 1
     genSeed    = Seed 12345 12345
+    genSeed'   = Seed 54321 54321
 
     -- TODO @mhueschen: unclear to me whether the environment should stay the same
     -- or change over the duration of a breeding cycle.
@@ -43,43 +43,48 @@ breedStsGoblins wantedFailure =
     -- | Fitness function. This should run the goblins on a set of examples
     -- which we generate atop `initState`.
     fitness :: [Bool] -> Double
-    fitness genome =
-      maybe 0 id
-        . ITree.treeValue
-        . runMaybeT
-        . distributeT
-        . IGen.runGenT genSize genSeed
-        $ do
-          -- TODO Loop some number of times
-          let gd = spawnGoblin genome TM.empty
-          --
-          env <- initEnvGen @sts
-          case applyRuleIndifferently @sts (IRC env) <$> initialRules of
-            [] -> error "no initStates"
-            ps -> let pfs :: [PredicateFailure sts]
-                      pfs = join (snd <$> ps)
-                   in if not (null pfs)
-                         then pure (scoreResult pfs)
-                         else do
-                           let initStates = map fst ps
+    fitness genome = scoreResult $ do -- this is a List monad
+      let gd = spawnGoblin genome TM.empty genSeed'
 
-                           sigs <- forM initStates (sigGen @sts env)
-                           newSigs <- forM sigs
-                                        (\sig -> evalStateT (tinker sig) gd)
+      initRule <- initialRules
+      let genBlarg :: Gen ((Environment sts, State sts), Signal sts)
+          genBlarg = do
+            -- below is a Gen monad
+            env <- initEnvGen @sts
+            let (initState, _predicateFailures) =
+                  applyRuleIndifferently @sts (IRC env) initRule
 
-                           let jcs = [ TRC (env, st, newSig)
-                                     | st <- initStates
-                                     , newSig <- newSigs
-                                     ]
+            sig <- sigGen @sts env initState
+            pure ((env, initState), sig)
 
-                           -- Apply the signal to the state (and environment)
-                           let results = [ applyRuleIndifferently @sts jc trs
-                                         | jc <- jcs
-                                         , trs <- transitionRules
-                                         ]
+      let newGenSig = evalState (tinker (snd <$> genBlarg)) gd
 
-                           -- Score the result
-                           pure $ scoreResult (join (snd <$> results))
+      let newSig :: Signal sts
+          newSig = maybe (error "wat") id
+                 $ ITree.treeValue
+                 . runMaybeT
+                 . distributeT
+                 . IGen.runGenT genSize genSeed
+                 $ newGenSig
+
+      let envState :: (Environment sts, State sts)
+          envState = maybe (error "wat") id
+                   $ ITree.treeValue
+                   . runMaybeT
+                   . distributeT
+                   . IGen.runGenT genSize genSeed
+                   $ (fst <$> genBlarg)
+                   -- TODO mhueschen | ^ does this make sense? should we
+                   -- tinker with both the env & state & the sig?
+
+      let jc = TRC (fst envState, snd envState, newSig)
+
+      -- Apply the signal to the state (and environment)
+      tr <- transitionRules
+      let (_finalState, pfs) = applyRuleIndifferently @sts jc tr
+
+      pfs
+
      where
 
       scoreResult :: [PredicateFailure sts] -> Double
@@ -102,5 +107,4 @@ breedStsGoblins wantedFailure =
         IfObjective $ \fitvals -> maximum fitvals == minimum fitvals
   in do
     population <- runGA initialize evolve
-    print (bestFirst Minimizing population)
-    pure population
+    pure (bestFirst Minimizing population)

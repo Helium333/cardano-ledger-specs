@@ -9,11 +9,16 @@ where
 
 import           Ledger.Core
   ( Addr(..)
+  , Epoch(..)
   , Hash(..)
   , Lovelace(..)
   , Owner(..)
   , Sig(..)
   , VKey(..)
+  , VKeyGenesis(..)
+  )
+import           Ledger.Delegation
+  ( DCert(..)
   )
 import           Ledger.UTxO
   ( Tx(..)
@@ -30,6 +35,9 @@ import           Test.Goblin
 --------------------------------------------------------------------------------
 
 instance Goblin Bool Addr where
+instance Goblin Bool Epoch where
+  tinker (Epoch w) = Epoch <$> tinker w
+  conjure = Epoch <$> conjure
 instance Goblin Bool Hash where
   tinker (Hash i) = Hash <$> tinker i
   conjure = Hash <$> conjure
@@ -40,9 +48,13 @@ instance Goblin Bool Owner where
   tinker (Owner n) = Owner <$> tinker n
   conjure = Owner <$> conjure
 instance Goblin Bool (Sig Tx) where
+instance Goblin Bool (Sig VKeyGenesis) where
 instance Goblin Bool VKey where
   tinker (VKey o) = VKey <$> tinker o
   conjure = VKey <$> conjure
+instance Goblin Bool VKeyGenesis where
+  tinker (VKeyGenesis k) = VKeyGenesis <$> tinker k
+  conjure = VKeyGenesis <$> conjure
 
 
 instance Goblin Bool Tx where
@@ -53,3 +65,5 @@ instance Goblin Bool TxIn where
 instance Goblin Bool TxOut where
 instance Goblin Bool TxWits where
 instance Goblin Bool Wit where
+
+instance Goblin Bool DCert where

@@ -5,6 +5,7 @@
 module Control.State.Transition.Goblin.BreedingPit
   (
     breedStsGoblins
+  , genBlarg
   )
 where
 
@@ -35,7 +36,6 @@ breedStsGoblins wantedFailure =
 
     genSize    = Range.Size 1
     genSeed    = Seed 12345 12345
-    genSeed'   = Seed 54321 54321
 
     -- TODO @mhueschen: unclear to me whether the environment should stay the same
     -- or change over the duration of a breeding cycle.
@@ -44,20 +44,10 @@ breedStsGoblins wantedFailure =
     -- which we generate atop `initState`.
     fitness :: [Bool] -> Double
     fitness genome = scoreResult $ do -- this is a List monad
-      let gd = spawnGoblin genome TM.empty genSeed'
+      let gd = spawnGoblin genome TM.empty
 
-      initRule <- initialRules
-      let genBlarg :: Gen ((Environment sts, State sts), Signal sts)
-          genBlarg = do
-            -- below is a Gen monad
-            env <- initEnvGen @sts
-            let (initState, _predicateFailures) =
-                  applyRuleIndifferently @sts (IRC env) initRule
-
-            sig <- sigGen @sts env initState
-            pure ((env, initState), sig)
-
-      let newGenSig = evalState (tinker (snd <$> genBlarg)) gd
+      blarg <- genBlarg @sts
+      let newGenSig = evalState (tinker (snd <$> blarg)) gd
 
       let newSig :: Signal sts
           newSig = maybe (error "wat") id
@@ -73,7 +63,7 @@ breedStsGoblins wantedFailure =
                    . runMaybeT
                    . distributeT
                    . IGen.runGenT genSize genSeed
-                   $ (fst <$> genBlarg)
+                   $ (fst <$> blarg)
                    -- TODO mhueschen | ^ does this make sense? should we
                    -- tinker with both the env & state & the sig?
 
@@ -108,3 +98,19 @@ breedStsGoblins wantedFailure =
   in do
     population <- runGA initialize evolve
     pure (bestFirst Minimizing population)
+
+
+
+genBlarg :: forall sts
+          . HasTrace sts
+         => [Gen ((Environment sts, State sts), Signal sts)]
+genBlarg = do -- below is a List monad
+  initRule <- initialRules
+  pure $ do
+    -- below is a Gen monad
+    env <- initEnvGen @sts
+    let (initState, _predicateFailures) =
+          applyRuleIndifferently @sts (IRC env) initRule
+
+    sig <- sigGen @sts env initState
+    pure ((env, initState), sig)

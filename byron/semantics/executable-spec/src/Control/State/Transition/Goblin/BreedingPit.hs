@@ -6,6 +6,8 @@ module Control.State.Transition.Goblin.BreedingPit
   (
     breedStsGoblins
   , genBlarg
+  , Gen
+  , Population
   )
 where
 
@@ -32,7 +34,7 @@ breedStsGoblins wantedFailure =
   let
     popsize    = 500
     genomeSize = 1000
-    maxiters   = 1000000
+    maxiters   = 5
 
     genSize    = Range.Size 1
     genSeed    = Seed 12345 12345
@@ -73,28 +75,36 @@ breedStsGoblins wantedFailure =
       tr <- transitionRules
       let (_finalState, pfs) = applyRuleIndifferently @sts jc tr
 
-      pfs
+      pure pfs
 
      where
 
-      scoreResult :: [PredicateFailure sts] -> Double
-      scoreResult failures =
-        -- 0 points for a rule passing
-        -- -1 points for an unwanted predicate failure
-        -- 5 points for a desired predicate failure
-        fromIntegral
-        $ (5 * length (filter (== wantedFailure) failures))
-        - length failures
+      scoreResult :: [[PredicateFailure sts]] -> Double
+      scoreResult ls =
+        -- 0 for a rule passing
+        -- 0 for an unwanted PredicateFailure
+        -- 5 for a desired PredicateFailure
+        -- --
+        -- ^ this objective function must be positive, so
+        -- we can't punish unwanted `PredicateFailure`s
+        let failures = concat ls
+            goodFailuresCount =
+              fromIntegral (length (filter (== wantedFailure)
+                                           failures))
+        in (5 * goodFailuresCount)
 
     initialize = getRandomBinaryGenomes popsize genomeSize
     select     = stochasticUniversalSampling popsize
     crossover  = onePointCrossover 0.5
     mutate     = pointMutate 0.01
-    evolve     = loop (Generations maxiters `Or` converged)
+    -- evolve     = loopIO [ TimeLimit 30
+    --                     -- , DoEvery 1 (\n pop -> putStrLn $ "gen: " <> show n <> ". " <> show (map snd pop))
+    --                     ]
+    evolve     = loop (Generations maxiters)-- `Or` converged)
       $ nextGeneration Maximizing fitness select 0 crossover mutate
      where
-      converged =
-        IfObjective $ \fitvals -> maximum fitvals == minimum fitvals
+      -- converged =
+      --   IfObjective $ \fitvals -> maximum fitvals == minimum fitvals
   in do
     population <- runGA initialize evolve
     pure (bestFirst Minimizing population)

@@ -79,7 +79,7 @@ explainTheGoblin :: forall sts
                  -> GoblinData Bool
                  -> [Edit EditExpr]
 explainTheGoblin genSigs goblin =
-  map (\g -> maybe (error "explainTheGoblin: got Nothing") id (explainGoblinGen g goblin))
+  map (\g -> maybe (error "explainTheGoblin: got Nothing") id (explainGoblinGen Nothing Nothing g goblin))
       genSigs
 
 
@@ -198,3 +198,26 @@ instance ToExpr Wit
   --     -- putStrLn $ render $ prettyEditExprCompact diff
   --   [] -> do
   --     putStrLn "No good goblins bred!"
+
+{-
+:set -XTypeApplications
+import Data.Maybe
+import System.Random
+import qualified Hedgehog as H
+import qualified Hedgehog.Internal.Seed as Seed
+import Test.Goblin
+import Test.Goblin.Explainer
+import           Text.PrettyPrint (render)
+import Instances
+import qualified Data.TypeRepMap as TM
+import Ledger.Delegation
+import Control.State.Transition.Goblin.BreedingPit
+let dcertGens = map ((head . snd) <$>) (genBlarg @DELEG)
+(stdGen1, stdGen2) <- split <$> getStdGen
+let genome = take 100 $ randoms stdGen1
+setStdGen stdGen2
+let goblinData = spawnGoblin genome TM.empty
+let size = H.Size 10000
+seed <- Seed.random
+mapM_ (\gen -> putStrLn (render (prettyEditExprCompact (fromJust (explainGoblinGen (Just size) (Just seed) gen goblinData))))) dcertGens
+-}

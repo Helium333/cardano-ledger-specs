@@ -16,6 +16,7 @@ import           Control.Monad.Trans.Maybe (runMaybeT)
 import qualified Data.TypeRepMap as TM
 import           Hedgehog
 import qualified Hedgehog.Internal.Gen as IGen
+import qualified Hedgehog.Internal.Seed as Seed
 import qualified Hedgehog.Internal.Tree as ITree
 import qualified Hedgehog.Range as Range
 
@@ -30,14 +31,16 @@ breedStsGoblins
    . (HasTrace sts, Goblin Bool (Signal sts))
   => PredicateFailure sts
   -> IO (Population Bool)
-breedStsGoblins wantedFailure =
+breedStsGoblins wantedFailure = do
+  genSeed <- Seed.random
+
   let
     popsize    = 500
     genomeSize = 1000
     maxiters   = 5
+    eliteCount = 5
 
-    genSize    = Range.Size 1
-    genSeed    = Seed 12345 12345
+    genSize    = Range.Size 50
 
     -- TODO @mhueschen: unclear to me whether the environment should stay the same
     -- or change over the duration of a breeding cycle.
@@ -101,13 +104,12 @@ breedStsGoblins wantedFailure =
     --                     -- , DoEvery 1 (\n pop -> putStrLn $ "gen: " <> show n <> ". " <> show (map snd pop))
     --                     ]
     evolve     = loop (Generations maxiters)-- `Or` converged)
-      $ nextGeneration Maximizing fitness select 0 crossover mutate
+      $ nextGeneration Maximizing fitness select eliteCount crossover mutate
      where
       -- converged =
       --   IfObjective $ \fitvals -> maximum fitvals == minimum fitvals
-  in do
-    population <- runGA initialize evolve
-    pure (bestFirst Minimizing population)
+  population <- runGA initialize evolve
+  pure (bestFirst Minimizing population)
 
 
 

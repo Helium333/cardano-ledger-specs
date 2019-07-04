@@ -26,13 +26,25 @@ import           Control.State.Transition.Generator (HasTrace(..))
 import           Test.Goblin
 import           Moo.GeneticAlgorithm.Binary
 
+import           Control.Monad (forM_)
+import           Control.Monad.STM
+import           Control.Concurrent.STM.TBQueue
+import           Data.TreeDiff.Class
+import           Data.TreeDiff.Pretty
+import Data.Maybe
+import Test.Goblin.Explainer
+import           Text.PrettyPrint (render)
+
+
 breedStsGoblins
   :: forall sts
-   . (HasTrace sts, Goblin Bool (Signal sts))
+   . (HasTrace sts, Goblin Bool (Signal sts), ToExpr (Signal sts))
   => PredicateFailure sts
-  -> IO (Population Bool)
+  -> IO (TBQueue (Int, String), Population Bool)
 breedStsGoblins wantedFailure = do
   genSeed <- Seed.random
+
+  sQ <- newTBQueueIO 100000
 
   let
     popsize    = 500
@@ -100,16 +112,19 @@ breedStsGoblins wantedFailure = do
     select     = stochasticUniversalSampling popsize
     crossover  = onePointCrossover 0.5
     mutate     = pointMutate 0.01
-    -- evolve     = loopIO [ TimeLimit 30
-    --                     -- , DoEvery 1 (\n pop -> putStrLn $ "gen: " <> show n <> ". " <> show (map snd pop))
-    --                     ]
-    evolve     = loop (Generations maxiters)-- `Or` converged)
-      $ nextGeneration Maximizing fitness select eliteCount crossover mutate
+    evolveIO   = loopIO [ DoEvery 1 (\n pop -> forM_ pop (\(genome,_score) ->
+                                      forM_ (genBlarg @sts) $ (\blarg -> do
+                                        let genSig = (snd <$> blarg)
+                                        let gd = spawnGoblin genome TM.empty
+                                        let msg = render (prettyEditExprCompact (fromJust (explainGoblinGen (Just genSize) (Just genSeed) genSig gd)))
+                                        atomically (writeTBQueue sQ (n, msg)))))
+                        , TimeLimit 10
+                        ]
+                        (Generations maxiters)
+                        (nextGeneration Maximizing fitness select eliteCount crossover mutate)
      where
-      -- converged =
-      --   IfObjective $ \fitvals -> maximum fitvals == minimum fitvals
-  population <- runGA initialize evolve
-  pure (bestFirst Minimizing population)
+  population <- runIO initialize evolveIO
+  pure (sQ, bestFirst Minimizing population)
 
 
 

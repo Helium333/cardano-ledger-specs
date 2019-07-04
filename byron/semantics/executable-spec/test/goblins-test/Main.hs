@@ -7,7 +7,7 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans  #-}
 import           Control.Concurrent (threadDelay)
-import           Control.Concurrent.Async (race)
+import           Control.Concurrent.Async
 import           Control.Monad (forM_)
 import           Data.TreeDiff.Class
 import           Data.TreeDiff.Expr
@@ -51,9 +51,23 @@ import           Ledger.UTxO
 import           Test.Goblin
 import           Test.Goblin.Explainer
 
+import           Control.Monad
+import           Control.Monad.STM
+import           Control.Concurrent.STM.TBQueue
+
 
 main :: IO ()
 main = do
+  let predicateFailure = SDelegSFailure . SDelegFailure $ EpochInThePast --IsNotGenesisKey
+  (sQ, pop) <- breedStsGoblins predicateFailure
+  reader <- async $ forever $ do
+              (n, diff) <- atomically (readTBQueue sQ)
+              putStrLn $ "Gen: " <> show n
+              putStrLn $ diff <> "\n"
+  print (head pop)
+
+
+  {-
   forM_ breeders $ \(PopStruct name action wrappedGenSigs) -> do
     let seconds = 30
     eVal <- race (threadDelay (seconds * 10^6)) action
@@ -71,6 +85,7 @@ main = do
         --               WrapUTXOWS genSigs -> explainTheGoblin @UTXOWS genSigs goblin
         -- forM_ diffs $ \diff ->
         --   putStrLn $ render $ prettyEditExprCompact diff
+  -}
 
 
 explainTheGoblin :: forall sts
@@ -83,6 +98,7 @@ explainTheGoblin genSigs goblin =
       genSigs
 
 
+  {-
 breedType :: forall sts
            . (Goblin Bool (Signal sts), HasTrace sts)
           => ([Gen (Signal sts)] -> WrappedGenSigs)
@@ -96,6 +112,7 @@ breedType wrapper predicateFailure =
   )
  where
   genSigs = (snd <$>) <$> (genBlarg @sts)
+  -}
 
 
 {-
@@ -125,6 +142,7 @@ data PopStruct = PopStruct
   }
 
 
+  {-
 breeders :: [PopStruct]
 breeders = concat $
   -- HasTrace DELEG         ./byron/ledger/executable-spec/src/Ledger/Delegation.hs 565
@@ -162,6 +180,8 @@ breeders = concat $
                        , InputsNotInUTxO
                        , NonPositiveOutputs
                        ]))
+
+-}
 
 -- I believe this is necessary to hide the differing STS types in the list
 -- and appease the typechecker.

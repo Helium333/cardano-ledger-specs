@@ -84,9 +84,9 @@ breedStsGoblins wantedFailure = do
 
       scoreResult :: [[PredicateFailure sts]] -> Double
       scoreResult ls =
-        -- 0 for a rule passing
-        -- 0 for an unwanted PredicateFailure
-        -- 5 for a desired PredicateFailure
+        -- 1 for a rule passing
+        -- 1 for an unwanted PredicateFailure
+        -- 6 for a desired PredicateFailure
         -- --
         -- ^ this objective function must be positive, so
         -- we can't punish unwanted `PredicateFailure`s
@@ -94,7 +94,7 @@ breedStsGoblins wantedFailure = do
             goodFailuresCount =
               fromIntegral (length (filter (== wantedFailure)
                                            failures))
-        in (5 * goodFailuresCount)
+        in 1 + (5 * goodFailuresCount)
 
     initialize = getRandomBinaryGenomes popsize genomeSize
     select     = stochasticUniversalSampling popsize

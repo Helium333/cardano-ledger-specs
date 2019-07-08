@@ -6,6 +6,7 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
@@ -28,6 +29,8 @@ import GHC.Generics (Generic)
 import Numeric.Natural (Natural)
 
 import Data.AbstractSize
+
+import Test.Goblin
 
 
 -- | An encoded hash of part of the system.
@@ -376,3 +379,52 @@ x ⊆ y = toSet x `isSubsetOf` toSet y
 
 toSet :: (Foldable f, Ord a) => f a -> Set a
 toSet = Set.fromList . toList
+
+
+---------------------------------------------------------------------------------
+-- Helpers
+---------------------------------------------------------------------------------
+
+(<$$>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
+(<$$>) = fmap . fmap
+
+
+--------------------------------------------------------------------------------
+-- Goblins instances
+--------------------------------------------------------------------------------
+
+instance Goblin Bool Addr where
+  tinker gen = do
+    gen' <- tinker ((\(Addr w) -> w) <$> gen)
+    pure (Addr <$> gen')
+  conjure = Addr <$$> conjure
+instance Goblin Bool Epoch where
+  tinker gen = do
+    gen' <- tinker ((\(Epoch w) -> w) <$> gen)
+    pure (Epoch <$> gen')
+  conjure = Epoch <$$> conjure
+instance Goblin Bool Hash where
+  tinker gen = do
+    gen' <- tinker ((\(Hash w) -> w) <$> gen)
+    pure (Hash <$> gen')
+  conjure = Hash <$$> conjure
+instance Goblin Bool Lovelace where
+  tinker gen = do
+    gen' <- tinker ((\(Lovelace w) -> w) <$> gen)
+    pure (Lovelace <$> gen')
+  conjure = Lovelace <$$> conjure
+instance Goblin Bool Owner where
+  tinker gen = do
+    gen' <- tinker ((\(Owner w) -> w) <$> gen)
+    pure (Owner <$> gen')
+  conjure = Owner <$$> conjure
+instance Goblin Bool VKey where
+  tinker gen = do
+    gen' <- tinker ((\(VKey w) -> w) <$> gen)
+    pure (VKey <$> gen')
+  conjure = VKey <$$> conjure
+instance Goblin Bool VKeyGenesis where
+  tinker gen = do
+    gen' <- tinker ((\(VKeyGenesis w) -> w) <$> gen)
+    pure (VKeyGenesis <$> gen')
+  conjure = VKeyGenesis <$$> conjure

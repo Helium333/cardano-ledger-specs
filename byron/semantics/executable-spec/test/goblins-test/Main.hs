@@ -59,7 +59,7 @@ import           Control.Concurrent.STM.TBQueue
 main :: IO ()
 main = do
   let predicateFailure = SDelegSFailure . SDelegFailure $ EpochInThePast --IsNotGenesisKey
-  (sQ, pop) <- breedStsGoblins predicateFailure
+  (sQ, pop) <- breedStsGoblins @DELEG predicateFailure
   reader <- async $ forever $ do
               (n, diff) <- atomically (readTBQueue sQ)
               putStrLn $ "Gen: " <> show n

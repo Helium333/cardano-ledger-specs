@@ -112,6 +112,8 @@ import           Ledger.Core (BlockCount, Epoch, HasHash, Hash (Hash), Owner (Ow
 import           Ledger.Core.Generators (epochGen, slotGen)
 import qualified Ledger.Core.Generators as CoreGen
 
+import Test.Goblin
+
 
 --------------------------------------------------------------------------------
 -- Abstract types
@@ -590,3 +592,18 @@ initialEnvFromGenesisKeys ngk chainLength =
     <*> epochGen 0 10
     <*> slotGen 0 100
     <*> CoreGen.k chainLength (chainLength `div` 10)
+
+
+--------------------------------------------------------------------------------
+-- Goblins instances
+--------------------------------------------------------------------------------
+
+instance Goblin Bool DCert where
+  tinker gen = do
+    genX <- tinker ((\(DCert x _ _ _) -> x) <$> gen)
+    genY <- tinker ((\(DCert _ y _ _) -> y) <$> gen)
+    genZ <- tinker ((\(DCert _ _ z _) -> z) <$> gen)
+    genW <- tinker ((\(DCert _ _ _ w) -> w) <$> gen)
+    pure (DCert <$> genX <*> genY <*> genZ <*> genW)
+  conjure = (\x y z w -> DCert <$> x <*> y <*> z *> w)
+        <$> conjure <*> conjure <*> conjure <*> conjure

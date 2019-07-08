@@ -22,7 +22,6 @@ import           Cardano.Ledger.Spec.STS.UTXOWS (UTXOWS, PredicateFailure(..))
 import           Control.State.Transition (Signal(..))
 import           Control.State.Transition.Generator (HasTrace(..))
 import           Control.State.Transition.Goblin.BreedingPit (breedStsGoblins, genBlarg, Gen, Population)
-import           Instances ()
 import           Ledger.Delegation (DELEG, ADELEG, ADELEGS, SDELEG, SDELEGS, PredicateFailure(..))
 
 

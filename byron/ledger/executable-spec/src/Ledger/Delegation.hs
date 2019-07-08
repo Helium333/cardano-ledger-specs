@@ -160,12 +160,14 @@ import Ledger.Core
   , range
   , unBlockCount
   )
+import Ledger.UTxO ()
 import Ledger.Core.Generators
   ( blockCountGen
   , epochGen
   , slotGen
   , vkgenesisGen
   )
+import Test.Goblin
 
 
 --------------------------------------------------------------------------------
@@ -607,3 +609,18 @@ initialEnvFromGenesisKeys ngk =
     <*> epochGen 0 10
     <*> slotGen 0 100
     <*> blockCountGen 0 100
+
+
+--------------------------------------------------------------------------------
+-- Goblins instances
+--------------------------------------------------------------------------------
+
+instance Goblin Bool DCert where
+  tinker gen = do
+    genX <- tinker ((\(DCert x _ _ _) -> x) <$> gen)
+    genY <- tinker ((\(DCert _ y _ _) -> y) <$> gen)
+    genZ <- tinker ((\(DCert _ _ z _) -> z) <$> gen)
+    genW <- tinker ((\(DCert _ _ _ w) -> w) <$> gen)
+    pure (DCert <$> genX <*> genY <*> genZ <*> genW)
+  conjure = (\x y z w -> DCert <$> x <*> y <*> z *> w)
+        <$> conjure <*> conjure <*> conjure <*> conjure

@@ -37,7 +37,7 @@ breedStsGoblins wantedFailure = do
   let
     popsize    = 500
     genomeSize = 1000
-    maxiters   = 5
+    maxiters   = 100
     eliteCount = 5
 
     genSize    = Range.Size 50
@@ -109,7 +109,7 @@ breedStsGoblins wantedFailure = do
       -- converged =
       --   IfObjective $ \fitvals -> maximum fitvals == minimum fitvals
   population <- runGA initialize evolve
-  pure (bestFirst Minimizing population)
+  pure (bestFirst Maximizing population)
 
 
 

@@ -6,9 +6,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans  #-}
-import           Control.Concurrent (threadDelay)
-import           Control.Concurrent.Async (race)
-import           Control.Monad (forM_)
+import           Control.Concurrent.Async (async, wait)
+import           Control.Monad (forM, forM_)
+import           Data.List (partition)
 import           Data.TreeDiff.Class
 import           Data.TreeDiff.Expr
 import           Data.TreeDiff.Pretty
@@ -54,23 +54,26 @@ import           Test.Goblin.Explainer
 
 main :: IO ()
 main = do
-  forM_ breeders $ \(PopStruct name action wrappedGenSigs) -> do
-    let seconds = 30
-    eVal <- race (threadDelay (seconds * 10^6)) action
-    case eVal of
-      Left () -> putStrLn ("FAIL: " <> name <> " failed to produce results in " <> show seconds <> " seconds.")
-      Right pop -> do
-        putStrLn ("PASS: " <> name <> " generated goblins. Best score: " <> show (snd (head pop)) <> ".")
-        -- putStrLn $ "Top 5: "
-        -- mapM_ print (take 5 pop)
-        -- let best = head pop
-        -- let goblin = (spawnGoblin (fst best) TM.empty)
-        -- let diffs = case wrappedGenSigs of
-        --               WrapDELEG  genSigs -> explainTheGoblin @DELEG  genSigs goblin
-        --               WrapUTXOW  genSigs -> explainTheGoblin @UTXOW  genSigs goblin
-        --               WrapUTXOWS genSigs -> explainTheGoblin @UTXOWS genSigs goblin
-        -- forM_ diffs $ \diff ->
-        --   putStrLn $ render $ prettyEditExprCompact diff
+  actions <- forM breeders $ \(PopStruct name action wrappedGenSigs) -> async $ do
+    pop <- action
+    pure (pop, name, wrappedGenSigs)
+  results <- forM actions wait
+  let (good, bad) = partition (\(pop,_,_) -> (snd (head pop)) > 1.0) results
+  putStrLn ("Total: " <> show (length results) <> ". Good: " <> show (length good) <> ". Bad: " <> show (length bad))
+  forM_ good $ \(pop, name, _) ->
+    putStrLn ("PASS: " <> name <> " generated goblins. Best score: " <> show (snd (head pop)) <> ".")
+  -- forM_ bad $ \(pop, name, _) ->
+  --   putStrLn ("FAIL: " <> name <> " failed to produce good results. Score: " <> show (snd (head pop)) <> ".")
+         -- putStrLn $ "Top 5: "
+         -- mapM_ print (take 5 pop)
+         -- let best = head pop
+         -- let goblin = (spawnGoblin (fst best) TM.empty)
+         -- let diffs = case wrappedGenSigs of
+         --               WrapDELEG  genSigs -> explainTheGoblin @DELEG  genSigs goblin
+         --               WrapUTXOW  genSigs -> explainTheGoblin @UTXOW  genSigs goblin
+         --               WrapUTXOWS genSigs -> explainTheGoblin @UTXOWS genSigs goblin
+         -- forM_ diffs $ \diff ->
+         --   putStrLn $ render $ prettyEditExprCompact diff
 
 
 explainTheGoblin :: forall sts
@@ -133,9 +136,9 @@ breeders = concat $
   -- HasTrace UTXOW         ./byron/ledger/executable-spec/src/Cardano/Ledger/Spec/STS/UTXOW.hs     110
   , map (\pf -> uncurry (PopStruct ("UTXOW: " <> show pf)) (breedType WrapUTXOW pf))
         utxoPFs
-  -- HasTrace UTXOWS        ./byron/ledger/executable-spec/src/Cardano/Ledger/Spec/STS/UTXOWS.hs    64
-  , map (\pf -> uncurry (PopStruct ("UTXOWS: " <> show pf)) (breedType WrapUTXOWS pf))
-        (map UtxowFailure utxoPFs)
+  -- -- HasTrace UTXOWS        ./byron/ledger/executable-spec/src/Cardano/Ledger/Spec/STS/UTXOWS.hs    64
+  -- , map (\pf -> uncurry (PopStruct ("UTXOWS: " <> show pf)) (breedType WrapUTXOWS pf))
+  --       (map UtxowFailure utxoPFs)
   ]
  where
   delegPFs = (concat [ (map (SDelegSFailure . SDelegFailure)

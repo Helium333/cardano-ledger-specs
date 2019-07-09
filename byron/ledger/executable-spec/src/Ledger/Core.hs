@@ -130,7 +130,7 @@ verify (VKey vk) vd (Sig sd sk) = vk == sk && vd == sd
 -- Slots and Epochs
 ---------------------------------------------------------------------------------
 
-newtype Epoch = Epoch Word64
+newtype Epoch = Epoch { unEpoch :: Word64 }
   deriving stock (Show, Generic)
   deriving newtype (Eq, Ord, Hashable, Num)
   deriving anyclass (HasTypeReps)

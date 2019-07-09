@@ -141,7 +141,7 @@ import Control.State.Transition.Generator
   )
 import Ledger.Core
   ( BlockCount
-  , Epoch
+  , Epoch(..)
   , HasHash
   , Hash(Hash)
   , Owner(Owner)
@@ -333,7 +333,9 @@ instance STS SDELEG where
         let d = liveAfter (env ^. k)
         notAlreadyScheduled d env st cert ?! IsAlreadyScheduled
         Set.member (cert ^. dwho . _1) (env ^. allowedDelegators) ?! IsNotGenesisKey
-        let diff = cert ^. depoch - env ^. epoch
+        let diff :: Integer -- must be signed for comparisons to work
+            diff = (fromIntegral (unEpoch (cert ^. depoch)))
+                 - (fromIntegral (unEpoch (env ^. epoch)))
         0 <= diff ?! EpochInThePast
         diff <= 1 ?! EpochPastNextEpoch
         return $ st

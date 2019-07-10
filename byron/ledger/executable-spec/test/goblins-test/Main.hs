@@ -7,14 +7,19 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans  #-}
 import           Control.Concurrent.Async (async, wait)
-import           Control.Monad (forM, forM_)
+import           Control.Monad (forM, forM_, replicateM_, unless)
 import           Data.List (partition)
 import           Data.TreeDiff.Class
 import           Data.TreeDiff.Expr
 import           Data.TreeDiff.Pretty
 import qualified Data.TypeRepMap as TM
+import qualified Options.Applicative as O
+import           System.FilePath.Posix ((</>), (<.>), makeValid)
+import           System.Directory (createDirectoryIfMissing, doesFileExist)
+import           System.Exit (exitFailure)
 import           System.IO (writeFile)
 import           Text.PrettyPrint (render)
+import           Text.Read (readEither)
 
 import           Cardano.Ledger.Spec.STS.UTXO (UTXO, PredicateFailure(..))
 import           Cardano.Ledger.Spec.STS.UTXOW (UTXOW, PredicateFailure(..))
@@ -50,17 +55,55 @@ import           Ledger.UTxO
 import           Test.Goblin
 import           Test.Goblin.Explainer
 
+allRunsDir :: FilePath
+allRunsDir = "runs"
 
 main :: IO ()
 main = do
+  runCount <- O.execParser opts
+  putStrLn ("Preparing for " <> show runCount <> " runs.")
+  createDirectoryIfMissing True allRunsDir
+  replicateM_ runCount trainGoblins
+
+trainGoblins :: IO ()
+trainGoblins = do
+  -- Set up directories.
+  let runIxFile = allRunsDir </> "count" <.> "txt"
+  runIx <- parseRunIndexFromFile runIxFile
+  let runDir    = allRunsDir </> show runIx
+      genomeDir = runDir </> "goblin_genomes"
+      passDir   = genomeDir </> "pass"
+      failDir   = genomeDir </> "fail"
+  mapM_ (createDirectoryIfMissing True) [passDir, failDir]
+
+  let teeIt = tee (runDir </> "log" <.> "txt")
+  teeIt ("Run index: " <> show runIx)
   actions <- forM breeders $ \(PopStruct name action wrappedGenSigs) -> async $ do
     pop <- action
     pure (pop, name, wrappedGenSigs)
-  results <- forM actions wait
+  results <- traverse wait actions
   let (good, bad) = partition (\(pop,_,_) -> (snd (head pop)) > 1.0) results
-  putStrLn ("Total: " <> show (length results) <> ". Good: " <> show (length good) <> ". Bad: " <> show (length bad))
-  forM_ good $ \(pop, name, _) ->
-    putStrLn ("PASS: " <> name <> " generated goblins. Best score: " <> show (snd (head pop)) <> ".")
+  teeIt ("Total: " <> show (length results) <> ". Good: " <> show (length good) <> ". Bad: " <> show (length bad))
+  forM_ good $ \(pop, name, _) -> do
+    teeIt ("PASS: " <> name <> " generated goblins. Best score: " <> show (snd (head pop)) <> ".")
+    writeFile (nameToPath passDir name) (show pop)
+  forM_ bad $ \(pop, name, _) -> do
+    writeFile (nameToPath failDir name) (show pop)
+
+nameToPath :: FilePath -> String -> FilePath
+nameToPath dir name = dir </> makeValid (subSpaces name)
+ where
+  subSpaces = subChar ' ' '_'
+  subChar target replacement [] = []
+  subChar target replacement (c:cs)
+    | target == c = replacement : (subChar target replacement cs)
+    | otherwise   = c           : (subChar target replacement cs)
+
+tee :: FilePath -> String -> IO ()
+tee fp msg = do
+  putStrLn msg
+  appendFile fp msg
+
   -- forM_ bad $ \(pop, name, _) ->
   --   putStrLn ("FAIL: " <> name <> " failed to produce good results. Score: " <> show (snd (head pop)) <> ".")
          -- putStrLn $ "Top 5: "
@@ -192,6 +235,38 @@ instance ToExpr VKey where
 instance ToExpr VKeyGenesis where
   toExpr (VKeyGenesis x) = App "VKeyGenesis" [toExpr x]
 instance ToExpr Wit
+
+
+-- | Top level parser with info.
+opts :: O.ParserInfo Int
+opts = O.info (parseRunCount O.<**> O.helper)
+    (  O.fullDesc
+    <> O.progDesc "Goblins breeding executable."
+    )
+
+parseRunCount :: O.Parser Int
+parseRunCount =
+    O.option O.auto (
+            O.long "run_count"
+         <> O.short 'r'
+         <> O.metavar "COUNT"
+         <> O.value 1
+         <> O.help "The desired number of runs. Each run trains goblins for each PredicateFailure of each STS rule"
+    )
+
+parseRunIndexFromFile :: FilePath -> IO Int
+parseRunIndexFromFile fp = do
+  doesExist <- doesFileExist fp
+  unless doesExist $ do
+    putStrLn "Initializing run index file."
+    writeFile fp "0" -- initialize
+  eVal <- readEither <$> readFile fp
+  ix <- case eVal of
+    Left err -> putStrLn ("parseRunIndexFromFile: no parse: " <> err)
+             >> exitFailure
+    Right ix -> pure ix
+  writeFile fp (show (ix+1)) -- increment counter
+  pure ix
 
   -- case (filter ((> 100.0) . snd) pop) of
   --   (best:_) -> do

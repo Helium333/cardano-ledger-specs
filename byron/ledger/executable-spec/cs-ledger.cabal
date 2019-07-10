@@ -132,9 +132,12 @@ executable goblins-test
     , containers
     , cryptonite
     , cs-ledger
+    , directory
+    , filepath
     , goblins
     , hedgehog
     , lens
+    , optparse-applicative
     , pretty
     , random
     , small-steps

@@ -156,45 +156,67 @@ instance Goblin Bool Tx where
     genX <- tinker ((\(Tx x _) -> x) <$> gen)
     genY <- tinker ((\(Tx _ y) -> y) <$> gen)
     pure (Tx <$> genX <*> genY)
-  conjure = (\x y -> Tx <$> x <*> y) <$> conjure <*> conjure
+  conjure = Tx <$> conjure <*> conjure
 instance Goblin Bool TxId where
   tinker gen = do
     gen' <- tinker ((\(TxId w) -> w) <$> gen)
     pure (TxId <$> gen')
-  conjure = TxId <$$> conjure
+  conjure = TxId <$> conjure
 instance Goblin Bool TxIn where
   tinker gen = do
     genX <- tinker ((\(TxIn x _) -> x) <$> gen)
     genY <- tinker ((\(TxIn _ y) -> y) <$> gen)
     pure (TxIn <$> genX <*> genY)
-  conjure = (\x y -> TxIn <$> x <*> y) <$> conjure <*> conjure
+  conjure = TxIn <$> conjure <*> conjure
 instance Goblin Bool TxOut where
   tinker gen = do
     genX <- tinker ((\(TxOut x _) -> x) <$> gen)
     genY <- tinker ((\(TxOut _ y) -> y) <$> gen)
     pure (TxOut <$> genX <*> genY)
-  conjure = (\x y -> TxOut <$> x <*> y) <$> conjure <*> conjure
+  conjure = TxOut <$> conjure <*> conjure
 instance Goblin Bool TxWits where
   tinker gen = do
     genX <- tinker ((\(TxWits x _) -> x) <$> gen)
     genY <- tinker ((\(TxWits _ y) -> y) <$> gen)
     pure (TxWits <$> genX <*> genY)
-  conjure = (\x y -> TxWits <$> x <*> y) <$> conjure <*> conjure
+  conjure = TxWits <$> conjure <*> conjure
 instance Goblin Bool Wit where
   tinker gen = do
     genX <- tinker ((\(Wit x _) -> x) <$> gen)
     genY <- tinker ((\(Wit _ y) -> y) <$> gen)
     pure (Wit <$> genX <*> genY)
-  conjure = (\x y -> Wit <$> x <*> y) <$> conjure <*> conjure
+  conjure = Wit <$> conjure <*> conjure
 instance Goblin Bool (Sig Tx) where
   tinker gen = do
     genX <- tinker ((\(Sig x _) -> x) <$> gen)
     genY <- tinker ((\(Sig _ y) -> y) <$> gen)
     pure (Sig <$> genX <*> genY)
-  conjure = (\x y -> Sig <$> x <*> y) <$> conjure <*> conjure
+  conjure = Sig <$> conjure <*> conjure
 instance Goblin Bool (Sig VKeyGenesis) where
   tinker gen = do
     genX <- tinker ((\(Sig x _) -> x) <$> gen)
     genY <- tinker ((\(Sig _ y) -> y) <$> gen)
     pure (Sig <$> genX <*> genY)
-  conjure = (\x y -> Sig <$> x <*> y) <$> conjure <*> conjure
+  conjure = Sig <$> conjure <*> conjure
+
+
+--------------------------------------------------------------------------------
+-- AddShrinks instances
+--------------------------------------------------------------------------------
+
+instance AddShrinks Tx where
+  addShrinks = pure
+instance AddShrinks TxId where
+  addShrinks = pure
+instance AddShrinks TxIn where
+  addShrinks = pure
+instance AddShrinks TxOut where
+  addShrinks = pure
+instance AddShrinks TxWits where
+  addShrinks = pure
+instance AddShrinks Wit where
+  addShrinks = pure
+instance AddShrinks (Sig Tx) where
+  addShrinks = pure
+instance AddShrinks (Sig VKeyGenesis) where
+  addShrinks = pure

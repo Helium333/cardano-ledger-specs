@@ -402,14 +402,6 @@ toSet = Set.fromList . toList
 (∩) = intersection
 
 
----------------------------------------------------------------------------------
--- Helpers
----------------------------------------------------------------------------------
-
-(<$$>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
-(<$$>) = fmap . fmap
-
-
 --------------------------------------------------------------------------------
 -- Goblins instances
 --------------------------------------------------------------------------------
@@ -418,34 +410,34 @@ instance Goblin Bool Addr where
   tinker gen = do
     gen' <- tinker ((\(Addr w) -> w) <$> gen)
     pure (Addr <$> gen')
-  conjure = Addr <$$> conjure
+  conjure = Addr <$> conjure
 instance Goblin Bool Epoch where
   tinker gen = do
     gen' <- tinker ((\(Epoch w) -> w) <$> gen)
     pure (Epoch <$> gen')
-  conjure = Epoch <$$> conjure
+  conjure = Epoch <$> conjure
 instance Goblin Bool Hash where
   tinker gen = do
     gen' <- tinker ((\(Hash w) -> w) <$> gen)
     pure (Hash <$> gen')
-  conjure = Hash <$$> conjure
+  conjure = Hash <$> conjure
 instance Goblin Bool Lovelace where
   tinker gen = do
     gen' <- tinker ((\(Lovelace w) -> w) <$> gen)
     pure (Lovelace <$> gen')
-  conjure = Lovelace <$$> conjure
+  conjure = Lovelace <$> conjure
 instance Goblin Bool Owner where
   tinker gen = do
     gen' <- tinker ((\(Owner w) -> w) <$> gen)
     pure (Owner <$> gen')
-  conjure = Owner <$$> conjure
+  conjure = Owner <$> conjure
 instance Goblin Bool VKey where
   tinker gen = do
     gen' <- tinker ((\(VKey w) -> w) <$> gen)
     pure (VKey <$> gen')
-  conjure = VKey <$$> conjure
+  conjure = VKey <$> conjure
 instance Goblin Bool VKeyGenesis where
   tinker gen = do
     gen' <- tinker ((\(VKeyGenesis w) -> w) <$> gen)
     pure (VKeyGenesis <$> gen')
-  conjure = VKeyGenesis <$$> conjure
+  conjure = VKeyGenesis <$> conjure

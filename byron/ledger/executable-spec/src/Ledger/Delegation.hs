@@ -605,5 +605,13 @@ instance Goblin Bool DCert where
     genZ <- tinker ((\(DCert _ _ z _) -> z) <$> gen)
     genW <- tinker ((\(DCert _ _ _ w) -> w) <$> gen)
     pure (DCert <$> genX <*> genY <*> genZ <*> genW)
-  conjure = (\x y z w -> DCert <$> x <*> y <*> z *> w)
-        <$> conjure <*> conjure <*> conjure <*> conjure
+  conjure =
+    DCert <$> conjure <*> conjure <*> conjure <*> conjure
+
+
+--------------------------------------------------------------------------------
+-- AddShrinks instances
+--------------------------------------------------------------------------------
+
+instance AddShrinks DCert where
+  addShrinks = pure

@@ -5,13 +5,11 @@
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans  #-}
 import           Control.Concurrent.Async (async, wait)
 import           Control.Monad (forM, forM_, replicateM_, unless)
 import           Data.List (partition)
 import           Data.TreeDiff.Class
 import           Data.TreeDiff.Expr
-import           Data.TreeDiff.Pretty
 import qualified Data.TypeRepMap as TM
 import qualified Options.Applicative as O
 import           System.FilePath.Posix ((</>), (<.>), makeValid)
@@ -214,27 +212,6 @@ data WrappedGenSigs where
   WrapDELEG  :: [Gen (Signal DELEG)]  -> WrappedGenSigs
   WrapUTXOW  :: [Gen (Signal UTXOW)]  -> WrappedGenSigs
   WrapUTXOWS :: [Gen (Signal UTXOWS)] -> WrappedGenSigs
-
-instance ToExpr Addr where
-instance ToExpr DCert where
-instance ToExpr Epoch where
-instance ToExpr Lovelace where
-  toExpr (Lovelace x) = App "Lovelace" [toExpr x]
-instance ToExpr Owner where
-  toExpr (Owner x) = App "Owner" [toExpr x]
-instance ToExpr (Sig VKeyGenesis)
-instance ToExpr (Sig Tx)
-instance ToExpr Tx
-instance ToExpr TxId where
-  toExpr (TxId (Hash i)) = App "TxId" [App "Hash" [toExpr i]]
-instance ToExpr TxIn
-instance ToExpr TxOut
-instance ToExpr TxWits
-instance ToExpr VKey where
-  toExpr (VKey x) = App "VKey" [toExpr x]
-instance ToExpr VKeyGenesis where
-  toExpr (VKeyGenesis x) = App "VKeyGenesis" [toExpr x]
-instance ToExpr Wit
 
 
 -- | Top level parser with info.

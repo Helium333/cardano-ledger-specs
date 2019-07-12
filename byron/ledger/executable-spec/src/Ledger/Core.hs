@@ -16,6 +16,8 @@ import Data.Bimap (Bimap)
 import qualified Data.Bimap as Bimap
 import Data.Hashable (Hashable)
 import qualified Data.Hashable as H
+import Data.TreeDiff.Class (ToExpr(..))
+import Data.TreeDiff.Expr (Expr(..))
 import Data.Typeable (typeOf)
 import qualified Data.Sequence as Seq
 import Data.Map.Strict (Map)
@@ -441,3 +443,19 @@ instance Goblin Bool VKeyGenesis where
     gen' <- tinker ((\(VKeyGenesis w) -> w) <$> gen)
     pure (VKeyGenesis <$> gen')
   conjure = VKeyGenesis <$> conjure
+
+
+--------------------------------------------------------------------------------
+-- ToExpr instances
+--------------------------------------------------------------------------------
+
+instance ToExpr Addr where
+instance ToExpr Epoch where
+instance ToExpr Lovelace where
+  toExpr (Lovelace x) = App "Lovelace" [toExpr x]
+instance ToExpr Owner where
+  toExpr (Owner x) = App "Owner" [toExpr x]
+instance ToExpr VKey where
+  toExpr (VKey x) = App "VKey" [toExpr x]
+instance ToExpr VKeyGenesis where
+  toExpr (VKeyGenesis x) = App "VKeyGenesis" [toExpr x]

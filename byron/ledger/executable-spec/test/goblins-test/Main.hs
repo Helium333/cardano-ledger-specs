@@ -100,7 +100,7 @@ nameToPath dir name = dir </> makeValid (subSpaces name)
 tee :: FilePath -> String -> IO ()
 tee fp msg = do
   putStrLn msg
-  appendFile fp msg
+  appendFile fp (msg++"\n")
 
   -- forM_ bad $ \(pop, name, _) ->
   --   putStrLn ("FAIL: " <> name <> " failed to produce good results. Score: " <> show (snd (head pop)) <> ".")
@@ -122,7 +122,7 @@ explainTheGoblin :: forall sts
                  -> GoblinData Bool
                  -> [Edit EditExpr]
 explainTheGoblin genSigs goblin =
-  map (\g -> maybe (error "explainTheGoblin: got Nothing") id (explainGoblinGen Nothing Nothing g goblin))
+  map (\g -> maybe (error "explainTheGoblin: got Nothing") (\(_,_,diff,_) -> diff) (explainGoblinGen Nothing Nothing g goblin))
       genSigs
 
 

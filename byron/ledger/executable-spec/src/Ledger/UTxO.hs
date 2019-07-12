@@ -22,6 +22,8 @@ import qualified Data.Hashable     as H
 import           Data.Map.Strict   (Map)
 import qualified Data.Map.Strict   as Map
 import           Data.Maybe        (fromMaybe)
+import           Data.TreeDiff.Class (ToExpr(..))
+import           Data.TreeDiff.Expr (Expr(..))
 import           Data.Typeable     (typeOf)
 import           GHC.Generics      (Generic)
 import           Numeric.Natural   (Natural)
@@ -220,3 +222,18 @@ instance AddShrinks (Sig Tx) where
   addShrinks = pure
 instance AddShrinks (Sig VKeyGenesis) where
   addShrinks = pure
+
+
+--------------------------------------------------------------------------------
+-- ToExpr instances
+--------------------------------------------------------------------------------
+
+instance ToExpr (Sig VKeyGenesis)
+instance ToExpr (Sig Tx)
+instance ToExpr Tx
+instance ToExpr TxId where
+  toExpr (TxId (Hash i)) = App "TxId" [App "Hash" [toExpr i]]
+instance ToExpr TxIn
+instance ToExpr TxOut
+instance ToExpr TxWits
+instance ToExpr Wit

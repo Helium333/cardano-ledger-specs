@@ -95,6 +95,7 @@ import qualified Data.List as List
 import Data.Maybe (catMaybes)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Data.TreeDiff.Class (ToExpr(..))
 import Data.Set (Set, (\\))
 import qualified Data.Set as Set
 import Data.Word (Word8)
@@ -634,3 +635,10 @@ instance Goblin Bool DCert where
 
 instance AddShrinks DCert where
   addShrinks = pure
+
+
+--------------------------------------------------------------------------------
+-- ToExpr instances
+--------------------------------------------------------------------------------
+
+instance ToExpr DCert where

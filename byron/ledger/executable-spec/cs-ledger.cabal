@@ -43,6 +43,7 @@ library
                      , hedgehog >= 1.0
                      , lens
                      , memory
+                     , tree-diff
                      -- Local deps
                      , small-steps
   default-language:    Haskell2010

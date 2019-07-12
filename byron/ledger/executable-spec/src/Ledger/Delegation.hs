@@ -600,7 +600,7 @@ initialEnvFromGenesisKeys ngk chainLength =
 --------------------------------------------------------------------------------
 
 instance Goblin Bool DCert where
-  tinker gen = do
+  tinker gen = conjureOrSave $ do
     genX <- tinker ((\(DCert x _ _ _) -> x) <$> gen)
     genY <- tinker ((\(DCert _ y _ _) -> y) <$> gen)
     genZ <- tinker ((\(DCert _ _ z _) -> z) <$> gen)

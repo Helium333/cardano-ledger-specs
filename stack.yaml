@@ -16,7 +16,7 @@ extra-deps:
 - gray-code-0.3.1
 - typerep-map-0.3.1
 - git: https://github.com/input-output-hk/goblins
-  commit: 0f433a271735c1b6e84c0098c82b8045386c3d27
+  commit: f675420cb615303f1b047d34901ad54538c52fb6
 
 nix:
   shell-file: nix/stack-shell.nix

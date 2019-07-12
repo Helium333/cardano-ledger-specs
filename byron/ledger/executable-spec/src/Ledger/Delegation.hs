@@ -625,7 +625,7 @@ instance Goblin Bool DCert where
     genZ <- tinker ((\(DCert _ _ z _) -> z) <$> gen)
     genW <- tinker ((\(DCert _ _ _ w) -> w) <$> gen)
     pure (DCert <$> genX <*> genY <*> genZ <*> genW)
-  conjure =
+  conjure = saveInBagOfTricks =<<
     DCert <$> conjure <*> conjure <*> conjure <*> conjure
 
 

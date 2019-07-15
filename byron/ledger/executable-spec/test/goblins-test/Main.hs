@@ -87,6 +87,7 @@ trainGoblins = do
     writeFile (nameToPath passDir name) (show pop)
   forM_ bad $ \(pop, name, _) -> do
     writeFile (nameToPath failDir name) (show pop)
+  teeIt ""
 
 nameToPath :: FilePath -> String -> FilePath
 nameToPath dir name = dir </> makeValid (subSpaces name)

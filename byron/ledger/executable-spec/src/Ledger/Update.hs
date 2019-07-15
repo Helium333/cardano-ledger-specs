@@ -18,7 +18,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Ledger.Update
-  (module Ledger.Update)
+  (module Ledger.Update
+  , PredicateFailure
+    ()
+  )
 where
 
 import Control.Arrow ((&&&))
@@ -73,6 +76,7 @@ import Ledger.Core
   )
 import qualified Ledger.Core as Core
 import qualified Ledger.Core.Generators as CoreGen
+import           Test.Goblin
 
 import Prelude hiding (min)
 
@@ -1434,3 +1438,32 @@ instance STS UPIEC where
 
 instance Embed PVBUMP UPIEC where
   wrapFailed = PVBUMPFailure
+
+
+--------------------------------------------------------------------------------
+-- Goblins instances
+--------------------------------------------------------------------------------
+
+instance Goblin Bool ApVer where
+instance Goblin Bool ApName where
+instance Goblin Bool Metadata where
+instance Goblin Bool ProtVer where
+instance Goblin Bool PParams where
+instance Goblin Bool SwVer where
+instance Goblin Bool UpId where
+instance Goblin Bool UpSD where
+instance Goblin Bool UProp where
+instance Goblin Bool Vote where
+
+instance Goblin Bool (Core.Sig UpId) where
+instance Goblin Bool (Core.Sig UpSD) where
+
+
+--------------------------------------------------------------------------------
+-- AddShrinks instances
+--------------------------------------------------------------------------------
+
+instance AddShrinks UProp where
+  addShrinks = pure
+instance AddShrinks Vote where
+  addShrinks = pure

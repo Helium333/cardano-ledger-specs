@@ -36,7 +36,7 @@ breedStsGoblins wantedFailure = do
 
   let
     popsize    = 500
-    genomeSize = 1000
+    genomeSize = 4000
     maxiters   = 100
     eliteCount = 5
 

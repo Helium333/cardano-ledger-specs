@@ -413,6 +413,7 @@ instance Goblin Bool Addr where
     gen' <- tinker ((\(Addr w) -> w) <$> gen)
     pure (Addr <$> gen')
   conjure = saveInBagOfTricks =<< Addr <$> conjure
+instance Goblin Bool BlockCount where
 instance Goblin Bool Epoch where
   tinker gen = conjureOrSave $ do
     gen' <- tinker ((\(Epoch w) -> w) <$> gen)
@@ -433,6 +434,7 @@ instance Goblin Bool Owner where
     gen' <- tinker ((\(Owner w) -> w) <$> gen)
     pure (Owner <$> gen')
   conjure = saveInBagOfTricks =<< Owner <$> conjure
+instance Goblin Bool SlotCount where
 instance Goblin Bool VKey where
   tinker gen = conjureOrSave $ do
     gen' <- tinker ((\(VKey w) -> w) <$> gen)

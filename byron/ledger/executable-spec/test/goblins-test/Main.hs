@@ -26,6 +26,8 @@ import           Control.State.Transition (Signal(..))
 import           Control.State.Transition.Generator (HasTrace(..))
 import           Control.State.Transition.Goblin.BreedingPit (breedStsGoblins, genBlarg, Gen, Population)
 import           Ledger.Delegation (DELEG, ADELEG, ADELEGS, SDELEG, SDELEGS, PredicateFailure(..))
+import           Ledger.Update
+  (ApName(..), ApVer(..), UpId(..), UPIREG, UPIVOTES, PredicateFailure(..))
 
 
 import           Ledger.Core
@@ -143,8 +145,6 @@ breedType wrapper predicateFailure =
 
 
 {-
-HasTrace UPIREG        ./byron/ledger/executable-spec/src/Ledger/Update.hs     846
-HasTrace UPIVOTES      ./byron/ledger/executable-spec/src/Ledger/Update.hs     1224
 
 -- this is massive - the toplevel STS, more or less
 HasTrace CHAIN         ./byron/chain/executable-spec/src/Cardano/Spec/Chain/STS/Rule/Chain.hs  168
@@ -170,16 +170,27 @@ data PopStruct = PopStruct
 
 
 breeders :: [PopStruct]
-breeders = concat $
-  -- HasTrace DELEG         ./byron/ledger/executable-spec/src/Ledger/Delegation.hs 565
-  [ map (\pf -> uncurry (PopStruct ("DELEG: " <> show pf)) (breedType WrapDELEG pf))
+breeders = concat $ [
+
+  -- HasTrace DELEG         byron/ledger/executable-spec/src/Ledger/Delegation.hs
+    map (\pf -> uncurry (PopStruct ("DELEG: " <> show pf)) (breedType WrapDELEG pf))
         delegPFs
-  -- HasTrace UTXOW         ./byron/ledger/executable-spec/src/Cardano/Ledger/Spec/STS/UTXOW.hs     110
+
+  -- HasTrace UTXOW         byron/ledger/executable-spec/src/Cardano/Ledger/Spec/STS/UTXOW.hs
   , map (\pf -> uncurry (PopStruct ("UTXOW: " <> show pf)) (breedType WrapUTXOW pf))
-        utxoPFs
-  -- -- HasTrace UTXOWS        ./byron/ledger/executable-spec/src/Cardano/Ledger/Spec/STS/UTXOWS.hs    64
+        utxowPFs
+
+  -- HasTrace UPIREG        byron/ledger/executable-spec/src/Ledger/Update.hs
+  , map (\pf -> uncurry (PopStruct ("UPIREG: " <> show pf)) (breedType WrapUPIREG pf))
+        upiregPFs
+
+  -- HasTrace UPIVOTES      byron/ledger/executable-spec/src/Ledger/Update.hs
+  , map (\pf -> uncurry (PopStruct ("UPIVOTES: " <> show pf)) (breedType WrapUPIVOTES pf))
+        upivotesPFs
+
+  -- -- HasTrace UTXOWS        ./byron/ledger/executable-spec/src/Cardano/Ledger/Spec/STS/UTXOWS.hs
   -- , map (\pf -> uncurry (PopStruct ("UTXOWS: " <> show pf)) (breedType WrapUTXOWS pf))
-  --       (map UtxowFailure utxoPFs)
+  --       (map UtxowFailure utxowPFs)
   ]
  where
   delegPFs = (concat [ (map (SDelegSFailure . SDelegFailure)
@@ -188,31 +199,65 @@ breeders = concat $
                             , EpochPastNextEpoch
                             , HasAlreadyDelegated
                             , IsAlreadyScheduled
-                            , DoesNotVerify
+                            , Ledger.Delegation.DoesNotVerify
                             ])
                      , (map (ADelegSFailure . ADelegFailure)
                             [ BeforeExistingDelegation
-                            , NoLastDelegation
+                            -- This is not used in the STS rules, so can't be triggered.
+                            -- , NoLastDelegation
                             , AfterExistingDelegation
                             , AlreadyADelegateOf (VKey (Owner 1)) (VKeyGenesis (VKey (Owner 2)))
                             ])
                      ])
-  utxoPFs = ([ InsufficientWitnesses
-             ] ++ (map UtxoFailure
-                       [ EmptyTxInputs
-                       , EmptyTxOutputs
-                       , FeeTooLow
-                       , IncreasedTotalBalance
-                       , InputsNotInUTxO
-                       , NonPositiveOutputs
-                       ]))
+  utxowPFs = ([ InsufficientWitnesses
+              ] ++ (map UtxoFailure
+                        [ EmptyTxInputs
+                        , EmptyTxOutputs
+                        , FeeTooLow
+                        , IncreasedTotalBalance
+                        , InputsNotInUTxO
+                        , NonPositiveOutputs
+                        ]))
+
+  upiregPFs = map UPREGFailure ([ NotGenesisDelegate
+                                , Ledger.Update.DoesNotVerify
+                                ] ++ (map UPVFailure upvPFs))
+
+  upvPFs = [ AVChangedInPVUpdate (ApName "") (ApVer 0)
+           , ParamsChangedInSVUpdate
+           , PVChangedInSVUpdate
+           ] ++ (map UPPVVFailure uppvvPFs)
+             ++ (map UPSVVFailure upsvvPFs)
+
+  uppvvPFs = [ CannotFollowPv
+             , CannotUpdatePv
+             , AlreadyProposedPv
+             , InvalidSystemTags
+             ]
+
+  upsvvPFs = [ AlreadyProposedSv
+             , CannotFollowSv
+             , InvalidApplicationName
+             ]
+
+  upivotesPFs = map (UpivoteFailure . UPVOTEFailure)
+                    ([ HigherThanThdAndNotAlreadyConfirmed
+                     , CfmThdNotReached
+                     , AlreadyConfirmed
+                     ] ++ (map ADDVOTEFailure addvotePFs))
+
+  addvotePFs = [ AVSigDoesNotVerify
+               , NoUpdateProposal (UpId 0)
+               ]
 
 -- I believe this is necessary to hide the differing STS types in the list
 -- and appease the typechecker.
 data WrappedGenSigs where
-  WrapDELEG  :: [Gen (Signal DELEG)]  -> WrappedGenSigs
-  WrapUTXOW  :: [Gen (Signal UTXOW)]  -> WrappedGenSigs
-  WrapUTXOWS :: [Gen (Signal UTXOWS)] -> WrappedGenSigs
+  WrapDELEG    :: [Gen (Signal DELEG)]    -> WrappedGenSigs
+  WrapUTXOW    :: [Gen (Signal UTXOW)]    -> WrappedGenSigs
+  WrapUTXOWS   :: [Gen (Signal UTXOWS)]   -> WrappedGenSigs
+  WrapUPIREG   :: [Gen (Signal UPIREG)]   -> WrappedGenSigs
+  WrapUPIVOTES :: [Gen (Signal UPIVOTES)] -> WrappedGenSigs
 
 
 -- | Top level parser with info.

@@ -148,6 +148,7 @@ executable goblins-test
     , tasty-hedgehog
     , tasty-hunit
     , text
+    , time
     , tree-diff >=0.0.2
     , typerep-map
   default-language: Haskell2010

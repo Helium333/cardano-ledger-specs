@@ -8,6 +8,7 @@
 import           Control.Concurrent.Async (async, wait)
 import           Control.Monad (forM, forM_, replicateM_, unless)
 import           Data.List (partition)
+import           Data.Time.Clock (diffUTCTime, getCurrentTime)
 import           Data.TreeDiff.Class
 import           Data.TreeDiff.Expr
 import qualified Data.TypeRepMap as TM
@@ -78,10 +79,15 @@ trainGoblins = do
 
   let teeIt = tee (runDir </> "log" <.> "txt")
   teeIt ("Run index: " <> show runIx)
+
+  startTime <- getCurrentTime
   actions <- forM breeders $ \(PopStruct name action wrappedGenSigs) -> async $ do
     pop <- action
     pure (pop, name, wrappedGenSigs)
   results <- traverse wait actions
+  endTime <- getCurrentTime
+  teeIt ("Training time was: " <> show (endTime `diffUTCTime` startTime))
+
   let (good, bad) = partition (\(pop,_,_) -> (snd (head pop)) > 1.0) results
   teeIt ("Total: " <> show (length results) <> ". Good: " <> show (length good) <> ". Bad: " <> show (length bad))
   forM_ good $ \(pop, name, _) -> do

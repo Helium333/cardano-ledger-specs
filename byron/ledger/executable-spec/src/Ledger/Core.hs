@@ -409,42 +409,14 @@ toSet = Set.fromList . toList
 --------------------------------------------------------------------------------
 
 instance Goblin Bool Addr where
-  tinker gen = conjureOrSave $ do
-    gen' <- tinker ((\(Addr w) -> w) <$> gen)
-    pure (Addr <$> gen')
-  conjure = saveInBagOfTricks =<< Addr <$> conjure
 instance Goblin Bool BlockCount where
 instance Goblin Bool Epoch where
-  tinker gen = conjureOrSave $ do
-    gen' <- tinker ((\(Epoch w) -> w) <$> gen)
-    pure (Epoch <$> gen')
-  conjure = saveInBagOfTricks =<< Epoch <$> conjure
 instance Goblin Bool Hash where
-  tinker gen = conjureOrSave $ do
-    gen' <- tinker ((\(Hash w) -> w) <$> gen)
-    pure (Hash <$> gen')
-  conjure = saveInBagOfTricks =<< Hash <$> conjure
 instance Goblin Bool Lovelace where
-  tinker gen = conjureOrSave $ do
-    gen' <- tinker ((\(Lovelace w) -> w) <$> gen)
-    pure (Lovelace <$> gen')
-  conjure = saveInBagOfTricks =<< Lovelace <$> conjure
 instance Goblin Bool Owner where
-  tinker gen = conjureOrSave $ do
-    gen' <- tinker ((\(Owner w) -> w) <$> gen)
-    pure (Owner <$> gen')
-  conjure = saveInBagOfTricks =<< Owner <$> conjure
 instance Goblin Bool SlotCount where
 instance Goblin Bool VKey where
-  tinker gen = conjureOrSave $ do
-    gen' <- tinker ((\(VKey w) -> w) <$> gen)
-    pure (VKey <$> gen')
-  conjure = saveInBagOfTricks =<< VKey <$> conjure
 instance Goblin Bool VKeyGenesis where
-  tinker gen = conjureOrSave $ do
-    gen' <- tinker ((\(VKeyGenesis w) -> w) <$> gen)
-    pure (VKeyGenesis <$> gen')
-  conjure = saveInBagOfTricks =<< VKeyGenesis <$> conjure
 
 
 --------------------------------------------------------------------------------

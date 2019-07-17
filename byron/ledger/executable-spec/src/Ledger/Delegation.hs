@@ -600,14 +600,6 @@ initialEnvFromGenesisKeys ngk chainLength =
 --------------------------------------------------------------------------------
 
 instance Goblin Bool DCert where
-  tinker gen = conjureOrSave $ do
-    genX <- tinker ((\(DCert x _ _ _) -> x) <$> gen)
-    genY <- tinker ((\(DCert _ y _ _) -> y) <$> gen)
-    genZ <- tinker ((\(DCert _ _ z _) -> z) <$> gen)
-    genW <- tinker ((\(DCert _ _ _ w) -> w) <$> gen)
-    pure (DCert <$> genX <*> genY <*> genZ <*> genW)
-  conjure = saveInBagOfTricks =<<
-    DCert <$> conjure <*> conjure <*> conjure <*> conjure
 
 
 --------------------------------------------------------------------------------

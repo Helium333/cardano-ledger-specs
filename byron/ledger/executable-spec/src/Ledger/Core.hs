@@ -409,14 +409,57 @@ toSet = Set.fromList . toList
 --------------------------------------------------------------------------------
 
 instance Goblin Bool Addr where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(Addr w) -> w) <$> gen)
+    pure (Addr <$> gen')
+  conjure = saveInBagOfTricks =<< Addr <$> conjure
 instance Goblin Bool BlockCount where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(BlockCount x) -> x) <$> gen)
+    pure (BlockCount <$> gen')
+  conjure = saveInBagOfTricks =<< BlockCount <$> conjure
 instance Goblin Bool Epoch where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(Epoch w) -> w) <$> gen)
+    pure (Epoch <$> gen')
+  conjure = saveInBagOfTricks =<< Epoch <$> conjure
 instance Goblin Bool Hash where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(Hash w) -> w) <$> gen)
+    pure (Hash <$> gen')
+  conjure = saveInBagOfTricks =<< Hash <$> conjure
 instance Goblin Bool Lovelace where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(Lovelace w) -> w) <$> gen)
+    pure (Lovelace <$> gen')
+  conjure = saveInBagOfTricks =<< Lovelace <$> conjure
 instance Goblin Bool Owner where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(Owner w) -> w) <$> gen)
+    pure (Owner <$> gen')
+  conjure = saveInBagOfTricks =<< Owner <$> conjure
+instance (Goblin Bool a, AddShrinks a)
+  => Goblin Bool (Sig a) where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    genX <- tinker ((\(Sig x _) -> x) <$> gen)
+    genY <- tinker ((\(Sig _ y) -> y) <$> gen)
+    pure (Sig <$> genX <*> genY)
+  conjure = saveInBagOfTricks =<< Sig <$> conjure <*> conjure
 instance Goblin Bool SlotCount where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(SlotCount x) -> x) <$> gen)
+    pure (SlotCount <$> gen')
+  conjure = saveInBagOfTricks =<< SlotCount <$> conjure
 instance Goblin Bool VKey where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(VKey w) -> w) <$> gen)
+    pure (VKey <$> gen')
+  conjure = saveInBagOfTricks =<< VKey <$> conjure
 instance Goblin Bool VKeyGenesis where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(VKeyGenesis w) -> w) <$> gen)
+    pure (VKeyGenesis <$> gen')
+  conjure = saveInBagOfTricks =<< VKeyGenesis <$> conjure
 
 
 --------------------------------------------------------------------------------
@@ -425,6 +468,8 @@ instance Goblin Bool VKeyGenesis where
 
 instance AddShrinks Addr where
   addShrinks (Addr x) = Addr <$> addShrinks x
+instance AddShrinks BlockCount where
+  addShrinks (BlockCount x) = BlockCount <$> addShrinks x
 instance AddShrinks Epoch where
   addShrinks (Epoch x) = Epoch <$> addShrinks x
 instance AddShrinks Hash where
@@ -433,6 +478,12 @@ instance AddShrinks Lovelace where
   addShrinks (Lovelace x) = Lovelace <$> addShrinks x
 instance AddShrinks Owner where
   addShrinks (Owner x) = Owner <$> addShrinks x
+instance AddShrinks a => AddShrinks (Sig a) where
+  addShrinks (Sig x o) = Sig <$> addShrinks x <*> addShrinks o
+instance AddShrinks (Sig VKeyGenesis) where
+  addShrinks = pure
+instance AddShrinks SlotCount where
+  addShrinks (SlotCount x) = SlotCount <$> addShrinks x
 instance AddShrinks VKey where
   addShrinks = pure
 instance AddShrinks VKeyGenesis where
@@ -449,6 +500,7 @@ instance ToExpr Lovelace where
   toExpr (Lovelace x) = App "Lovelace" [toExpr x]
 instance ToExpr Owner where
   toExpr (Owner x) = App "Owner" [toExpr x]
+instance (ToExpr a) => ToExpr (Sig a)
 instance ToExpr VKey where
   toExpr (VKey x) = App "VKey" [toExpr x]
 instance ToExpr VKeyGenesis where

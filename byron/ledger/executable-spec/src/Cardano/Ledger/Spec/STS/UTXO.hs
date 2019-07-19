@@ -7,6 +7,7 @@ module Cardano.Ledger.Spec.STS.UTXO
   ( UTXO
   , UTxOEnv (UTxOEnv)
   , UTxOState (UTxOState)
+  , PredicateFailure(..)
   , utxo
   , utxo0
   , pps

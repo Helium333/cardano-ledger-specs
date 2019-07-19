@@ -120,9 +120,9 @@ genBlarg = do -- below is a List monad
   initRule <- initialRules
   pure $ do
     -- below is a Gen monad
-    env <- initEnvGen @sts
+    env <- envGen @sts 3
     let (initState, _predicateFailures) =
           applyRuleIndifferently @sts (IRC env) initRule
 
-    sig <- sigGen @sts env initState
+    sig <- sigGen @sts Nothing env initState
     pure ((env, initState), sig)

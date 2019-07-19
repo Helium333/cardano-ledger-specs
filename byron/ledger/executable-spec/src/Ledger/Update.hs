@@ -1582,24 +1582,99 @@ protocolVersionEndorsementGen upienv upistate =
 --------------------------------------------------------------------------------
 
 instance Goblin Bool ApVer where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(ApVer x) -> x) <$> gen)
+    pure (ApVer <$> gen')
+  conjure = saveInBagOfTricks =<< ApVer <$> conjure
 instance Goblin Bool ApName where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(ApName x) -> x) <$> gen)
+    pure (ApName <$> gen')
+  conjure = saveInBagOfTricks =<< ApName <$> conjure
 instance Goblin Bool Metadata where
+  tinker = pure
+  conjure = pure Metadata
 instance Goblin Bool ProtVer where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    genX <- tinker ((\(ProtVer x _ _) -> x) <$> gen)
+    genY <- tinker ((\(ProtVer _ y _) -> y) <$> gen)
+    genZ <- tinker ((\(ProtVer _ _ z) -> z) <$> gen)
+    pure (ProtVer <$> genX <*> genY <*> genZ)
+  conjure = saveInBagOfTricks =<<
+    ProtVer <$> conjure <*> conjure <*> conjure
 instance Goblin Bool PParams where
+  tinker gen = tinkerRummagedOrConjureOrSave $
+    PParams
+      <$$> (tinker ((\(PParams x _ _ _ _ _ _ _ _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ x _ _ _ _ _ _ _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ _ x _ _ _ _ _ _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ _ _ x _ _ _ _ _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ _ _ _ x _ _ _ _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ _ _ _ _ x _ _ _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ _ _ _ _ _ x _ _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ _ _ _ _ _ _ x _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ _ _ _ _ _ _ _ x _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ _ _ _ _ _ _ _ _ x _ _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ _ _ _ _ _ _ _ _ _ x _) -> x) <$> gen))
+      <**> (tinker ((\(PParams _ _ _ _ _ _ _ _ _ _ _ x) -> x) <$> gen))
+  conjure = saveInBagOfTricks =<<
+    PParams <$> conjure <*> conjure <*> conjure
+            <*> conjure <*> conjure <*> conjure
+            <*> conjure <*> conjure <*> conjure
+            <*> conjure <*> conjure <*> conjure
 instance Goblin Bool SwVer where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    genX <- tinker ((\(SwVer x _) -> x) <$> gen)
+    genY <- tinker ((\(SwVer _ y) -> y) <$> gen)
+    pure (SwVer <$> genX <*> genY)
+  conjure = saveInBagOfTricks =<<
+    SwVer <$> conjure <*> conjure
 instance Goblin Bool UpId where
-instance Goblin Bool UpSD where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(UpId x) -> x) <$> gen)
+    pure (UpId <$> gen')
+  conjure = saveInBagOfTricks =<< UpId <$> conjure
 instance Goblin Bool UProp where
+  tinker gen = tinkerRummagedOrConjureOrSave $
+    UProp
+      <$$> (tinker ((\(UProp x _ _ _ _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(UProp _ x _ _ _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(UProp _ _ x _ _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(UProp _ _ _ x _ _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(UProp _ _ _ _ x _ _ _) -> x) <$> gen))
+      <**> (tinker ((\(UProp _ _ _ _ _ x _ _) -> x) <$> gen))
+      <**> (tinker ((\(UProp _ _ _ _ _ _ x _) -> x) <$> gen))
+      <**> (tinker ((\(UProp _ _ _ _ _ _ _ x) -> x) <$> gen))
+  conjure = saveInBagOfTricks =<<
+    UProp <$> conjure <*> conjure <*> conjure
+          <*> conjure <*> conjure <*> conjure
+          <*> conjure <*> conjure
 instance Goblin Bool Vote where
-
-instance Goblin Bool (Core.Sig UpId) where
-instance Goblin Bool (Core.Sig UpSD) where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    genX <- tinker ((\(Vote x _ _) -> x) <$> gen)
+    genY <- tinker ((\(Vote _ y _) -> y) <$> gen)
+    genZ <- tinker ((\(Vote _ _ z) -> z) <$> gen)
+    pure (Vote <$> genX <*> genY <*> genZ)
+  conjure = saveInBagOfTricks =<<
+    Vote <$> conjure <*> conjure <*> conjure
 
 
 --------------------------------------------------------------------------------
 -- AddShrinks instances
 --------------------------------------------------------------------------------
 
+instance AddShrinks ApName where
+  addShrinks = pure
+instance AddShrinks ApVer where
+  addShrinks = pure
+instance AddShrinks PParams where
+  addShrinks = pure
+instance AddShrinks ProtVer where
+  addShrinks = pure
+instance AddShrinks SwVer where
+  addShrinks = pure
+instance AddShrinks UpId where
+  addShrinks = pure
 instance AddShrinks UProp where
   addShrinks = pure
 instance AddShrinks Vote where

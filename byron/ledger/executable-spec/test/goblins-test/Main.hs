@@ -26,7 +26,7 @@ import           Cardano.Ledger.Spec.STS.UTXOWS (UTXOWS, PredicateFailure(..))
 import           Control.State.Transition (Signal(..))
 import           Control.State.Transition.Generator (HasTrace(..))
 import           Control.State.Transition.Goblin.BreedingPit (breedStsGoblins, genBlarg, Gen, Population)
-import           Ledger.Delegation (DELEG, ADELEG, ADELEGS, SDELEG, SDELEGS, PredicateFailure(..))
+import           Ledger.Delegation (DELEG, ADELEG, ADELEGS, SDELEG, SDELEGS, PredicateFailure(..), EpochDiff(..))
 import           Ledger.Update
   (ApName(..), ApVer(..), UpId(..), UPIREG, UPIVOTES, PredicateFailure(..))
 
@@ -201,8 +201,8 @@ breeders = concat $ [
  where
   delegPFs = (concat [ (map (SDelegSFailure . SDelegFailure)
                             [ IsNotGenesisKey
-                            , EpochInThePast
-                            , EpochPastNextEpoch
+                            , EpochInThePast (EpochDiff (Epoch 1) (Epoch 0))
+                            , EpochPastNextEpoch (EpochDiff (Epoch 0) (Epoch 1))
                             , HasAlreadyDelegated
                             , IsAlreadyScheduled
                             , Ledger.Delegation.DoesNotVerify

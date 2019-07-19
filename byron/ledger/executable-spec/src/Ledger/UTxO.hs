@@ -154,13 +154,40 @@ makeTxWits (UTxO utxo) tx = TxWits
 --------------------------------------------------------------------------------
 
 instance Goblin Bool Tx where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    genX <- tinker ((\(Tx x _) -> x) <$> gen)
+    genY <- tinker ((\(Tx _ y) -> y) <$> gen)
+    pure (Tx <$> genX <*> genY)
+  conjure = saveInBagOfTricks =<< Tx <$> conjure <*> conjure
 instance Goblin Bool TxId where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    gen' <- tinker ((\(TxId w) -> w) <$> gen)
+    pure (TxId <$> gen')
+  conjure = saveInBagOfTricks =<< TxId <$> conjure
 instance Goblin Bool TxIn where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    genX <- tinker ((\(TxIn x _) -> x) <$> gen)
+    genY <- tinker ((\(TxIn _ y) -> y) <$> gen)
+    pure (TxIn <$> genX <*> genY)
+  conjure = saveInBagOfTricks =<< TxIn <$> conjure <*> conjure
 instance Goblin Bool TxOut where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    genX <- tinker ((\(TxOut x _) -> x) <$> gen)
+    genY <- tinker ((\(TxOut _ y) -> y) <$> gen)
+    pure (TxOut <$> genX <*> genY)
+  conjure = saveInBagOfTricks =<< TxOut <$> conjure <*> conjure
 instance Goblin Bool TxWits where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    genX <- tinker ((\(TxWits x _) -> x) <$> gen)
+    genY <- tinker ((\(TxWits _ y) -> y) <$> gen)
+    pure (TxWits <$> genX <*> genY)
+  conjure = saveInBagOfTricks =<< TxWits <$> conjure <*> conjure
 instance Goblin Bool Wit where
-instance Goblin Bool (Sig Tx) where
-instance Goblin Bool (Sig VKeyGenesis) where
+  tinker gen = tinkerRummagedOrConjureOrSave $ do
+    genX <- tinker ((\(Wit x _) -> x) <$> gen)
+    genY <- tinker ((\(Wit _ y) -> y) <$> gen)
+    pure (Wit <$> genX <*> genY)
+  conjure = saveInBagOfTricks =<< Wit <$> conjure <*> conjure
 
 
 --------------------------------------------------------------------------------
@@ -179,18 +206,12 @@ instance AddShrinks TxWits where
   addShrinks = pure
 instance AddShrinks Wit where
   addShrinks = pure
-instance AddShrinks (Sig Tx) where
-  addShrinks = pure
-instance AddShrinks (Sig VKeyGenesis) where
-  addShrinks = pure
 
 
 --------------------------------------------------------------------------------
 -- ToExpr instances
 --------------------------------------------------------------------------------
 
-instance ToExpr (Sig VKeyGenesis)
-instance ToExpr (Sig Tx)
 instance ToExpr Tx
 instance ToExpr TxId where
   toExpr (TxId (Hash i)) = App "TxId" [App "Hash" [toExpr i]]

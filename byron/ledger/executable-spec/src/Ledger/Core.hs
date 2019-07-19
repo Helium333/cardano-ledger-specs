@@ -1,5 +1,6 @@
 {-# LANGUAGE ConstrainedClassMethods    #-}
 {-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE DerivingVia                #-}
@@ -14,6 +15,7 @@ module Ledger.Core where
 
 import Data.Bimap (Bimap)
 import qualified Data.Bimap as Bimap
+import Data.Data (Data)
 import Data.Hashable (Hashable)
 import qualified Data.Hashable as H
 import Data.TreeDiff.Class (ToExpr(..))
@@ -53,7 +55,7 @@ class HasHash a where
 -- |Representation of the owner of key pair.
 newtype Owner = Owner
   { unOwner :: Natural
-  } deriving stock (Show, Generic)
+  } deriving stock (Show, Generic, Data)
     deriving newtype (Eq, Ord, Hashable)
     deriving anyclass (HasTypeReps)
 
@@ -71,7 +73,7 @@ instance HasOwner SKey where
 
 -- |Verification Key.
 newtype VKey = VKey Owner
-  deriving stock (Show, Generic)
+  deriving stock (Show, Generic, Data)
   deriving newtype (Eq, Ord, Hashable)
   deriving anyclass (HasTypeReps)
 
@@ -83,7 +85,7 @@ instance HasOwner VKey where
 
 -- | A genesis key is a specialisation of a generic VKey.
 newtype VKeyGenesis = VKeyGenesis { unVKeyGenesis :: VKey}
-  deriving stock (Show, Generic)
+  deriving stock (Show, Generic, Data)
   deriving newtype (Eq, Ord, Hashable, HasHash)
   deriving anyclass (HasTypeReps)
 
@@ -147,7 +149,7 @@ verify (VKey vk) vd (Sig sd sk) = vk == sk && vd == sd
 ---------------------------------------------------------------------------------
 
 newtype Epoch = Epoch { unEpoch :: Word64 }
-  deriving stock (Show, Generic)
+  deriving stock (Show, Generic, Data)
   deriving newtype (Eq, Ord, Hashable, Num)
   deriving anyclass (HasTypeReps)
 

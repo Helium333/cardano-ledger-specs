@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -86,6 +87,7 @@ import           Control.Lens (Lens', lens, makeFields, to, (%~), (&), (.~), (<>
 import           Data.AbstractSize
 import           Data.Bimap (Bimap, (!>))
 import qualified Data.Bimap as Bimap
+import           Data.Data (Data)
 import           Data.Hashable (Hashable)
 import qualified Data.Hashable as H
 import qualified Data.List as List
@@ -241,10 +243,10 @@ dIStateDState = lens
 --------------------------------------------------------------------------------
 
 -- | Delegation scheduling rules
-data SDELEG
+data SDELEG deriving Data
 
 data EpochDiff = EpochDiff { currentEpoch :: Epoch, certEpoch :: Epoch }
-  deriving (Eq, Show)
+  deriving (Eq, Show, Data)
 
 instance STS SDELEG where
   type State SDELEG = DSState
@@ -258,7 +260,7 @@ instance STS SDELEG where
     | HasAlreadyDelegated
     | IsAlreadyScheduled
     | DoesNotVerify
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = [ return DSState
                    { _dSStateScheduledDelegations = []
@@ -314,7 +316,7 @@ liveAfter :: BlockCount -> SlotCount
 liveAfter bc = SlotCount $ 2 * unBlockCount bc
 
 -- | Delegation rules
-data ADELEG
+data ADELEG deriving Data
 
 instance STS ADELEG where
   type State ADELEG = DState
@@ -330,7 +332,7 @@ instance STS ADELEG where
     -- | The given key is a delegate of the given genesis key.
     | AlreadyADelegateOf VKey VKeyGenesis
 
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = [
     do
@@ -377,7 +379,7 @@ instance STS ADELEG where
     ]
 
 -- | Delegation scheduling sequencing
-data SDELEGS
+data SDELEGS deriving Data
 
 instance STS SDELEGS where
   type State SDELEGS = DSState
@@ -386,7 +388,7 @@ instance STS SDELEGS where
 
   data PredicateFailure SDELEGS
     = SDelegFailure (PredicateFailure SDELEG)
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = [ do
                      IRC env <- judgmentContext
@@ -407,7 +409,7 @@ instance Embed SDELEG SDELEGS where
   wrapFailed = SDelegFailure
 
 -- | Delegation rules sequencing
-data ADELEGS
+data ADELEGS deriving Data
 
 instance STS ADELEGS where
   type State ADELEGS = DState
@@ -416,7 +418,7 @@ instance STS ADELEGS where
 
   data PredicateFailure ADELEGS
     = ADelegFailure (PredicateFailure ADELEG)
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = [ do
                      IRC env <- judgmentContext
@@ -437,7 +439,7 @@ instance Embed ADELEG ADELEGS where
   wrapFailed = ADelegFailure
 
 -- | Delegation interface
-data DELEG
+data DELEG deriving Data
 
 instance STS DELEG where
   type State DELEG = DIState
@@ -447,7 +449,7 @@ instance STS DELEG where
   data PredicateFailure DELEG
     = SDelegSFailure (PredicateFailure SDELEGS)
     | ADelegSFailure (PredicateFailure ADELEGS)
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = [ do
                      IRC env <- judgmentContext
@@ -528,7 +530,7 @@ dcertsGen env st =
           }
 
 -- | Dummy transition system needed for generating sequences of delegation certificates.
-data MSDELEG
+data MSDELEG deriving Data
 
 instance STS MSDELEG where
 

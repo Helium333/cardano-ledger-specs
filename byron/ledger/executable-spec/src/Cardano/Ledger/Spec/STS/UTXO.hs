@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE NamedFieldPuns             #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -15,6 +16,7 @@ module Cardano.Ledger.Spec.STS.UTXO
   )
 where
 
+import           Data.Data (Data)
 import qualified Data.Set as Set
 
 import Control.State.Transition
@@ -35,7 +37,7 @@ import Ledger.GlobalParams (lovelaceCap)
 import Ledger.Update (PParams)
 import Ledger.UTxO (Tx, UTxO, balance, pcMinFee, txins, txouts, value, unUTxO)
 
-data UTXO
+data UTXO deriving Data
 
 data UTxOEnv = UTxOEnv
   { utxo0 :: UTxO
@@ -59,7 +61,7 @@ instance STS UTXO where
     | IncreasedTotalBalance
     | InputsNotInUTxO
     | NonPositiveOutputs
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules =
     [ do

@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE EmptyDataDeriving #-}
@@ -29,6 +30,7 @@ import           Control.Lens
 import           Data.Bimap (Bimap, empty, lookupR)
 import qualified Data.Bimap as Bimap
 import           Data.Char (isAscii)
+import           Data.Data (Data)
 import           Data.Foldable (foldl', toList)
 import           Data.Hashable (Hashable)
 import qualified Data.Hashable as H
@@ -101,7 +103,7 @@ makeLenses ''PParams
 instance HasTypeReps PParams
 
 newtype UpId = UpId Int
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Data)
   deriving newtype (Eq, Ord, Hashable)
   deriving anyclass (HasTypeReps)
 
@@ -110,21 +112,21 @@ data ProtVer = ProtVer
   { _pvMaj :: Natural
   , _pvMin :: Natural
   , _pvAlt :: Natural
-  } deriving (Eq, Generic, Ord, Show, Hashable)
+  } deriving (Eq, Generic, Ord, Show, Hashable, Data)
 
 makeLenses ''ProtVer
 
 instance HasTypeReps ProtVer
 
 newtype ApName = ApName String
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Data)
   deriving newtype (Eq, Ord, Hashable)
 
 instance HasTypeReps ApName
 
 -- | Application version
 newtype ApVer = ApVer Natural
-  deriving stock (Generic, Show)
+  deriving stock (Generic, Show, Data)
   deriving newtype (Eq, Ord, Num, Hashable)
 
 instance HasTypeReps ApVer
@@ -297,7 +299,7 @@ svCanFollow avs (an,av) =
 ------------------------------------------------------------------------
 
 -- | Update Proposal Software Version Validation
-data UPSVV
+data UPSVV deriving Data
 
 instance STS UPSVV where
   type Environment UPSVV = Map ApName (ApVer, Core.Slot, Metadata)
@@ -308,7 +310,7 @@ instance STS UPSVV where
     = AlreadyProposedSv
     | CannotFollowSv
     | InvalidApplicationName
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = []
   transitionRules =
@@ -325,7 +327,7 @@ instance STS UPSVV where
       fstSnd (x, y, _) = (x, y)
 
 
-data UPPVV
+data UPPVV deriving Data
 
 instance STS UPPVV where
   type Environment UPPVV =
@@ -340,7 +342,7 @@ instance STS UPPVV where
     | CannotUpdatePv [UpdateConstraintViolation]
     | AlreadyProposedPv
     | InvalidSystemTags
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = []
   transitionRules =
@@ -360,7 +362,7 @@ instance STS UPPVV where
 
 
 -- | Update proposal validity
-data UPV
+data UPV deriving Data
 
 instance STS UPV where
   type Environment UPV =
@@ -382,7 +384,7 @@ instance STS UPV where
     | AVChangedInPVUpdate ApName ApVer (Maybe (ApVer, Slot, Metadata))
     | ParamsChangedInSVUpdate
     | PVChangedInSVUpdate
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = []
   transitionRules =
@@ -422,7 +424,7 @@ instance Embed UPPVV UPV where
 instance Embed UPSVV UPV where
   wrapFailed = UPSVVFailure
 
-data UPREG
+data UPREG deriving Data
 
 instance STS UPREG where
   type Environment UPREG =
@@ -441,7 +443,7 @@ instance STS UPREG where
     = UPVFailure (PredicateFailure UPV)
     | NotGenesisDelegate
     | DoesNotVerify
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = []
   transitionRules =
@@ -480,7 +482,7 @@ instance HasHash (Maybe Ledger.Update.UProp, [Ledger.Update.Vote]) where
   hash = Core.Hash . H.hash
 
 
-data ADDVOTE
+data ADDVOTE deriving Data
 
 instance STS ADDVOTE where
   type Environment ADDVOTE =
@@ -493,7 +495,7 @@ instance STS ADDVOTE where
   data PredicateFailure ADDVOTE
     = AVSigDoesNotVerify
     | NoUpdateProposal UpId
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = []
   transitionRules =
@@ -513,7 +515,7 @@ instance STS ADDVOTE where
         return $! vts <> vtsPid
     ]
 
-data UPVOTE
+data UPVOTE deriving Data
 
 instance STS UPVOTE where
   type Environment UPVOTE =
@@ -532,7 +534,7 @@ instance STS UPVOTE where
     | HigherThanThdAndNotAlreadyConfirmed
     | CfmThdNotReached
     | AlreadyConfirmed
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = []
   transitionRules =
@@ -569,14 +571,14 @@ instance Embed ADDVOTE UPVOTE where
 -- Update voting
 ------------------------------------------------------------------------
 
-data FADS
+data FADS deriving Data
 
 instance STS FADS where
   type Environment FADS = ()
   type State FADS = [(Core.Slot, (ProtVer, PParams))]
   type Signal FADS = (Core.Slot, (ProtVer, PParams))
   data PredicateFailure FADS
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = []
   transitionRules =
@@ -592,7 +594,7 @@ instance STS FADS where
           _ -> (sn, (bv, ppsc)) : fads
     ]
 
-data UPEND
+data UPEND deriving Data
 
 -- | Find the key that corresponds to the value satisfying the given predicate.
 -- In case zero or more than one key is found this function returns Nothing.
@@ -627,7 +629,7 @@ instance STS UPEND where
     | CannotAdopt ProtVer
     | NotADelegate VKey
     | UnconfirmedProposal UpId
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = []
   transitionRules =
@@ -828,7 +830,7 @@ registeredProtocolUpdateProposals :: UPIState -> Map UpId (ProtVer, PParams)
 registeredProtocolUpdateProposals ((_, _), _, _, rpus, _, _, _, _, _) = rpus
 
 
-data UPIREG
+data UPIREG deriving Data
 
 instance STS UPIREG where
   type Environment UPIREG = UPIEnv
@@ -836,7 +838,7 @@ instance STS UPIREG where
   type Signal UPIREG = UProp
   data PredicateFailure UPIREG
     = UPREGFailure (PredicateFailure UPREG)
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = [ return $! emptyUPIState ]
 
@@ -1187,7 +1189,7 @@ increasingProbabilityAt gen (lower, upper)
                   , (5, pure upper)
                   ]
 
-data UPIVOTE
+data UPIVOTE deriving Data
 
 instance STS UPIVOTE where
   type Environment UPIVOTE = UPIEnv
@@ -1195,7 +1197,7 @@ instance STS UPIVOTE where
   type Signal UPIVOTE = Vote
   data PredicateFailure UPIVOTE
     = UPVOTEFailure (PredicateFailure UPVOTE)
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = []
   transitionRules =
@@ -1244,7 +1246,7 @@ instance Embed UPVOTE UPIVOTE where
   wrapFailed = UPVOTEFailure
 
 
-data UPIVOTES
+data UPIVOTES deriving Data
 
 instance STS UPIVOTES where
   type Environment UPIVOTES = UPIEnv
@@ -1253,7 +1255,7 @@ instance STS UPIVOTES where
 
   data PredicateFailure UPIVOTES
     = UpivoteFailure (PredicateFailure UPIVOTE)
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
   initialRules = [ return $! emptyUPIState ]
 
@@ -1358,7 +1360,7 @@ instance HasTrace UPIVOTES where
         replicateFst (a, bs) = zip (repeat a) bs
 
 
-data UPIEND
+data UPIEND deriving Data
 
 instance STS UPIEND where
   type Environment UPIEND = UPIEnv
@@ -1427,7 +1429,7 @@ pickHighlyEndorsedProtocolVersion endorsementsList =
                           & take 5
                           & fmap fst
 
-data PVBUMP
+data PVBUMP deriving Data
 
 instance STS PVBUMP where
   type Environment PVBUMP =
@@ -1463,7 +1465,7 @@ instance STS PVBUMP where
             pure $! (pv_c, pps_c)
     ]
 
-data UPIEC
+data UPIEC deriving Data
 
 instance STS UPIEC where
   type Environment UPIEC =

@@ -153,7 +153,7 @@ type STag = String
 
 -- | For now we do not have any requirements on metadata.
 data Metadata = Metadata
-  deriving (Eq, Ord, Show, Generic, Hashable)
+  deriving (Eq, Ord, Show, Generic, Hashable, Data)
 
 -- | Update proposal
 data UProp = UProp
@@ -281,7 +281,7 @@ data UpdateConstraintViolation
   | TransactionSizeTooLarge Natural (Threshold Natural)
   | ScriptVersionTooLarge Natural (Threshold Natural)
   | ScriptVersionTooSmall Natural (Threshold Natural)
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Data)
 
 svCanFollow
   :: Map ApName (ApVer, Core.Slot, Metadata)

@@ -29,7 +29,7 @@ import           Control.State.Transition.Generator (HasTrace(..))
 import           Control.State.Transition.Goblin.BreedingPit (breedStsGoblins, genBlarg, Gen, Population)
 import           Ledger.Delegation (DELEG, ADELEG, ADELEGS, SDELEG, SDELEGS, PredicateFailure(..), EpochDiff(..))
 import           Ledger.Update
-  (ApName(..), ApVer(..), UpId(..), UPIREG, UPIVOTES, PredicateFailure(..))
+  (ApName(..), ApVer(..), UpId(..), ADDVOTE, UPIREG, UPIVOTES, UPPVV, UPSVV, UPV, PredicateFailure(..))
 
 
 import           Ledger.Core
@@ -200,6 +200,7 @@ breeders = concat $ [
   --       (map UtxowFailure utxowPFs)
   ]
  where
+  delegPFs :: [PredicateFailure DELEG]
   delegPFs = (concat [ (map (SDelegSFailure . SDelegFailure)
                             [ IsNotGenesisKey
                             , EpochInThePast (EpochDiff (Epoch 1) (Epoch 0))
@@ -216,6 +217,8 @@ breeders = concat $ [
                             , AlreadyADelegateOf (VKey (Owner 1)) (VKeyGenesis (VKey (Owner 2)))
                             ])
                      ])
+
+  utxowPFs :: [PredicateFailure UTXOW]
   utxowPFs = ([ InsufficientWitnesses
               ] ++ (map UtxoFailure
                         [ EmptyTxInputs
@@ -226,33 +229,39 @@ breeders = concat $ [
                         , NonPositiveOutputs
                         ]))
 
+  upiregPFs :: [PredicateFailure UPIREG]
   upiregPFs = map UPREGFailure ([ NotGenesisDelegate
                                 , Ledger.Update.DoesNotVerify
                                 ] ++ (map UPVFailure upvPFs))
 
-  upvPFs = [ AVChangedInPVUpdate (ApName "") (ApVer 0)
+  upvPFs :: [PredicateFailure UPV]
+  upvPFs = [ AVChangedInPVUpdate (ApName "") (ApVer 0) Nothing
            , ParamsChangedInSVUpdate
            , PVChangedInSVUpdate
            ] ++ (map UPPVVFailure uppvvPFs)
              ++ (map UPSVVFailure upsvvPFs)
 
+  uppvvPFs :: [PredicateFailure UPPVV]
   uppvvPFs = [ CannotFollowPv
-             , CannotUpdatePv
+             , CannotUpdatePv []
              , AlreadyProposedPv
              , InvalidSystemTags
              ]
 
+  upsvvPFs :: [PredicateFailure UPSVV]
   upsvvPFs = [ AlreadyProposedSv
              , CannotFollowSv
              , InvalidApplicationName
              ]
 
+  upivotesPFs :: [PredicateFailure UPIVOTES]
   upivotesPFs = map (UpivoteFailure . UPVOTEFailure)
                     ([ HigherThanThdAndNotAlreadyConfirmed
                      , CfmThdNotReached
                      , AlreadyConfirmed
                      ] ++ (map ADDVOTEFailure addvotePFs))
 
+  addvotePFs :: [PredicateFailure ADDVOTE]
   addvotePFs = [ AVSigDoesNotVerify
                , NoUpdateProposal (UpId 0)
                ]

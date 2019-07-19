@@ -7,6 +7,7 @@
 
 import           Control.Concurrent.Async (async, wait)
 import           Control.Monad (forM, forM_, replicateM_, unless)
+import           Data.Data (Data)
 import           Data.List (partition)
 import           Data.Time.Clock (diffUTCTime, getCurrentTime)
 import           Data.TreeDiff.Class
@@ -136,7 +137,7 @@ explainTheGoblin genSigs goblin =
 
 
 breedType :: forall sts
-           . (Goblin Bool (Signal sts), HasTrace sts)
+           . (Goblin Bool (Signal sts), HasTrace sts, Data (PredicateFailure sts))
           => ([Gen (Signal sts)] -> WrappedGenSigs)
           -> PredicateFailure sts
           -> ( IO (Population Bool)

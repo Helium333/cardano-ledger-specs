@@ -13,6 +13,7 @@ where
 
 import           Control.Monad.State.Strict (evalState)
 import           Control.Monad.Trans.Maybe (runMaybeT)
+import           Data.Data (Data, toConstr)
 import qualified Data.TypeRepMap as TM
 import           Hedgehog
 import qualified Hedgehog.Internal.Gen as IGen
@@ -28,7 +29,7 @@ import           Moo.GeneticAlgorithm.Binary
 
 breedStsGoblins
   :: forall sts
-   . (HasTrace sts, Goblin Bool (Signal sts))
+   . (HasTrace sts, Goblin Bool (Signal sts), Data (PredicateFailure sts))
   => PredicateFailure sts
   -> IO (Population Bool)
 breedStsGoblins wantedFailure = do
@@ -90,10 +91,9 @@ breedStsGoblins wantedFailure = do
         -- --
         -- ^ this objective function must be positive, so
         -- we can't punish unwanted `PredicateFailure`s
-        let failures = concat ls
-            goodFailuresCount =
-              fromIntegral (length (filter (== wantedFailure)
-                                           failures))
+        let goodFailuresCount =
+              fromIntegral (length (filter (\pf -> toConstr pf == toConstr wantedFailure)
+                                           (concat ls)))
         in 1 + (5 * goodFailuresCount)
 
     initialize = getRandomBinaryGenomes popsize genomeSize

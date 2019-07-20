@@ -626,3 +626,24 @@ instance AddShrinks DCert where
 --------------------------------------------------------------------------------
 
 instance ToExpr DCert where
+
+
+--------------------------------------------------------------------------------
+-- SeedGoblin instances
+--------------------------------------------------------------------------------
+
+instance SeedGoblin DSEnv where
+  seeder a@(DSEnv x1 x2 x3 x4) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+    seeder x2
+    seeder x3
+    seeder x4
+
+instance SeedGoblin DIState where
+  seeder a@(DIState x1 x2 x3 x4) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+    seeder x2
+    seeder x3
+    seeder x4

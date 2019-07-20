@@ -507,3 +507,49 @@ instance ToExpr VKey where
   toExpr (VKey x) = App "VKey" [toExpr x]
 instance ToExpr VKeyGenesis where
   toExpr (VKeyGenesis x) = App "VKeyGenesis" [toExpr x]
+
+
+--------------------------------------------------------------------------------
+-- SeedGoblin instances
+--------------------------------------------------------------------------------
+
+instance SeedGoblin Addr where
+  seeder a@(Addr x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin BlockCount where
+  seeder a@(BlockCount x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin Epoch where
+  seeder a@(Epoch x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin Hash where
+  seeder a@(Hash x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin Lovelace where
+  seeder a@(Lovelace x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin Owner where
+  seeder a@(Owner x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin Slot where
+  seeder a@(Slot x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin SlotCount where
+  seeder a@(SlotCount x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin VKey where
+  seeder a@(VKey x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin VKeyGenesis where
+  seeder a@(VKeyGenesis x) = do
+    () <$ saveInBagOfTricks a
+    seeder x

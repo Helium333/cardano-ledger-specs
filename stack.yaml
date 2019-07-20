@@ -16,7 +16,7 @@ extra-deps:
 - gray-code-0.3.1
 - typerep-map-0.3.1
 - git: https://github.com/input-output-hk/goblins
-  commit: d504f00f45c5b776438f20d58c8ec881b0b0be3d
+  commit: 9709056f46692c3b5a9a6814bc62e3c1c2502d97
 
 - git: https://github.com/input-output-hk/cardano-prelude
   commit: d673b92f2a2d9354d102514d0a0fa74f8248b14a

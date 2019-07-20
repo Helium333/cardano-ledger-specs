@@ -1681,3 +1681,49 @@ instance AddShrinks UProp where
   addShrinks = pure
 instance AddShrinks Vote where
   addShrinks = pure
+
+
+--------------------------------------------------------------------------------
+-- SeedGoblin instances
+--------------------------------------------------------------------------------
+
+instance SeedGoblin ApName where
+  seeder a@(ApName x1) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+instance SeedGoblin ApVer where
+  seeder a@(ApVer x1) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+instance SeedGoblin SwVer where
+  seeder a@(SwVer x1 x2) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+    seeder x2
+instance SeedGoblin PParams where
+  seeder a@(PParams x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+    seeder x2
+    seeder x3
+    seeder x4
+    seeder x5
+    seeder x6
+    seeder x7
+    seeder x8
+    seeder x9
+    seeder x10
+    seeder x11
+    seeder x12
+instance SeedGoblin ProtVer where
+  seeder a@(ProtVer x1 x2 x3) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+    seeder x2
+    seeder x3
+instance SeedGoblin Metadata where
+  seeder = const (pure ())
+instance SeedGoblin UpId where
+  seeder a@(UpId x1) = do
+    () <$ saveInBagOfTricks a
+    seeder x1

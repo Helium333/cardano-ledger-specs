@@ -137,7 +137,8 @@ explainTheGoblin genSigs goblin =
 
 
 breedType :: forall sts
-           . (Goblin Bool (Signal sts), HasTrace sts, Data (PredicateFailure sts))
+           . ( Goblin Bool (Signal sts), HasTrace sts, Data (PredicateFailure sts)
+             , SeedGoblin (Environment sts), SeedGoblin (State sts))
           => ([Gen (Signal sts)] -> WrappedGenSigs)
           -> PredicateFailure sts
           -> ( IO (Population Bool)

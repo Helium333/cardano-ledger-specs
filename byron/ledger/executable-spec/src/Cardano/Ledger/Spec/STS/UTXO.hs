@@ -36,6 +36,7 @@ import Ledger.Core (Lovelace, (∪), (⊆), (⋪), (◁), dom, range)
 import Ledger.GlobalParams (lovelaceCap)
 import Ledger.Update (PParams)
 import Ledger.UTxO (Tx, UTxO, balance, pcMinFee, txins, txouts, value, unUTxO)
+import Test.Goblin
 
 data UTXO deriving Data
 
@@ -96,3 +97,19 @@ instance STS UTXO where
                            }
 
     ]
+
+
+--------------------------------------------------------------------------------
+-- SeedGoblin instances
+--------------------------------------------------------------------------------
+
+instance SeedGoblin UTxOEnv where
+  seeder a@(UTxOEnv x1 x2) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+    seeder x2
+instance SeedGoblin UTxOState where
+  seeder a@(UTxOState x1 x2) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+    seeder x2

@@ -29,7 +29,8 @@ import           Moo.GeneticAlgorithm.Binary
 
 breedStsGoblins
   :: forall sts
-   . (HasTrace sts, Goblin Bool (Signal sts), Data (PredicateFailure sts))
+   . ( HasTrace sts, Goblin Bool (Signal sts), Data (PredicateFailure sts)
+     , SeedGoblin (Environment sts), SeedGoblin (State sts))
   => PredicateFailure sts
   -> IO (Population Bool)
 breedStsGoblins wantedFailure = do
@@ -50,10 +51,23 @@ breedStsGoblins wantedFailure = do
     -- which we generate atop `initState`.
     fitness :: [Bool] -> Double
     fitness genome = scoreResult $ do -- this is a List monad
-      let gd = spawnGoblin genome TM.empty
-
       blarg <- genBlarg @sts
-      let newGenSig = evalState (tinker (snd <$> blarg)) gd
+      let env   :: Environment sts
+          state :: State sts
+          (env, state) = maybe (error "wat") id
+                       $ ITree.treeValue
+                       . runMaybeT
+                       . distributeT
+                       . IGen.runGenT genSize genSeed
+                       $ (fst <$> blarg)
+
+      -- Seed the bagOfTricks
+      let seedBagOfTricks = seeder env >> seeder state
+
+      let gd = spawnGoblin genome TM.empty
+      let newGenSig = flip evalState gd $ do
+                        seedBagOfTricks
+                        tinker (snd <$> blarg)
 
       let newSig :: Signal sts
           newSig = maybe (error "wat") id
@@ -63,17 +77,7 @@ breedStsGoblins wantedFailure = do
                  . IGen.runGenT genSize genSeed
                  $ newGenSig
 
-      let envState :: (Environment sts, State sts)
-          envState = maybe (error "wat") id
-                   $ ITree.treeValue
-                   . runMaybeT
-                   . distributeT
-                   . IGen.runGenT genSize genSeed
-                   $ (fst <$> blarg)
-                   -- TODO mhueschen | ^ does this make sense? should we
-                   -- tinker with both the env & state & the sig?
-
-      let jc = TRC (fst envState, snd envState, newSig)
+      let jc = TRC (env, state, newSig)
 
       -- Apply the signal to the state (and environment)
       tr <- transitionRules

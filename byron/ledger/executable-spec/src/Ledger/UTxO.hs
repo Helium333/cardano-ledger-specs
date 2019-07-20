@@ -219,3 +219,27 @@ instance ToExpr TxIn
 instance ToExpr TxOut
 instance ToExpr TxWits
 instance ToExpr Wit
+
+
+--------------------------------------------------------------------------------
+-- SeedGoblin instances
+--------------------------------------------------------------------------------
+
+instance SeedGoblin UTxO where
+  seeder a@(UTxO x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin TxId where
+  seeder a@(TxId x) = do
+    () <$ saveInBagOfTricks a
+    seeder x
+instance SeedGoblin TxIn where
+  seeder a@(TxIn x1 x2) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+    seeder x2
+instance SeedGoblin TxOut where
+  seeder a@(TxOut x1 x2) = do
+    () <$ saveInBagOfTricks a
+    seeder x1
+    seeder x2
